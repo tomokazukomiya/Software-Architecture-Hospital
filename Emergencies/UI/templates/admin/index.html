@@ -1,0 +1,277 @@
+{% extends "admin/index.html" %}
+{% load i18n static jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    /* Jazzmin-inspired styling */
+    .dashboard-card {
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid;
+        margin-bottom: 20px;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-emergency { border-left-color: #dc3545; }
+    .card-patients { border-left-color: #17a2b8; }
+    .card-staff { border-left-color: #6f42c1; }
+    .card-inventory { border-left-color: #28a745; }
+    
+    .card-icon {
+        font-size: 2rem;
+        opacity: 0.7;
+    }
+    
+    .info-box-content {
+        padding: 15px;
+    }
+    
+    .info-box-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+    
+    .chart-container {
+        height: 250px;
+        margin-bottom: 20px;
+    }
+    
+    /* Jazzmin color palette */
+    .bg-primary { background-color: #4e73df !important; }
+    .bg-success { background-color: #1cc88a !important; }
+    .bg-info { background-color: #36b9cc !important; }
+    .bg-warning { background-color: #f6c23e !important; }
+    .bg-danger { background-color: #e74a3b !important; }
+    .bg-secondary { background-color: #858796 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-ambulance mr-2"></i> Emergency Department Dashboard</h2>
+            <p class="text-muted">Last updated: {% now "DATETIME_FORMAT" %}</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-card card-emergency h-100 py-2">
+                <div class="info-box-content">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                Active Emergencies
+                            </div>
+                            <div class="info-box-number mb-0">{{ emergency_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-truck-medical card-icon text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-card card-patients h-100 py-2">
+                <div class="info-box-content">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                Total Patients
+                            </div>
+                            <div class="info-box-number mb-0">{{ patient_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-injured card-icon text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-card card-staff h-100 py-2">
+                <div class="info-box-content">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                Medical Staff
+                            </div>
+                            <div class="info-box-number mb-0">{{ staff_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-md card-icon text-purple"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-card card-inventory h-100 py-2">
+                <div class="info-box-content">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                Low Stock Items
+                            </div>
+                            <div class="info-box-number mb-0">{{ low_inventory_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-pills card-icon text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-xl-6 col-lg-6">
+            <div class="dashboard-card h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-tasks mr-2"></i>Triage Level Distribution
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="triageChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-6 col-lg-6">
+            <div class="dashboard-card h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-bed mr-2"></i>Bed Occupancy Status
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="bedChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-history mr-2"></i>Recent Emergency Visits
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Triage</th>
+                                    <th>Chief Complaint</th>
+                                    <th>Arrival Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for visit in recent_visits %}
+                                <tr>
+                                    <td>{{ visit.patient }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ visit.get_triage_badge }}">
+                                            {{ visit.get_triage_level_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ visit.chief_complaint|truncatechars:40 }}</td>
+                                    <td>{{ visit.arrival_time|timesince }} ago</td>
+                                    <td>
+                                        {% if visit.is_admitted %}
+                                            <span class="badge badge-danger">Admitted</span>
+                                        {% else %}
+                                            <span class="badge badge-success">Discharged</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+
+const triageCtx = document.getElementById('triageChart').getContext('2d');
+const triageChart = new Chart(triageCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ triage_labels|safe }},
+        datasets: [{
+            data: {{ triage_data|safe }},
+            backgroundColor: [
+                '#e74a3b', 
+                '#f6c23e', 
+                '#4e73df', 
+                '#1cc88a', 
+                '#858796'  
+            ],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }],
+    },
+    options: {
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right',
+            }
+        }
+    }
+});
+
+const bedCtx = document.getElementById('bedChart').getContext('2d');
+const bedChart = new Chart(bedCtx, {
+    type: 'bar',
+    data: {
+        labels: ['Available', 'Occupied', 'Maintenance'],
+        datasets: [{
+            label: 'Beds',
+            data: {{ bed_data|safe }},
+            backgroundColor: [
+                '#1cc88a', 
+                '#e74a3b', 
+                '#f6c23e' 
+            ],
+        }],
+    },
+    options: {
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

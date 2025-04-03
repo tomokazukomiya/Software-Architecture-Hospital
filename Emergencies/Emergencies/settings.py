@@ -31,12 +31,15 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'UI',
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'Core',
 ]
 
 MIDDLEWARE = [
@@ -54,7 +57,7 @@ ROOT_URLCONF = 'Emergencies.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'UI/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -114,9 +117,55 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+import os
+
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_REDIRECT_URL = '/admin/'
+LOGOUT_REDIRECT_URL = '/admin/' 
+
+JAZZMIN_SETTINGS = {
+    "show_ui_builder": True,
+    "site_title": "Emergencies",
+    "site_header": "Emergencies",
+    "site_brand": "Emergencies",
+    "site_logo": "logo/logo.png",
+    "copyright": "Emergencies",
+    "custom_css": "css/jazzmin_custom.css",
+    "welcome_sign": "Welcome to Emergencies Dashboard",
+
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+
+        "core.Patient": "fas fa-user-injured",
+        "core.EmergencyVisit": "fas fa-truck-medical",
+        "core.VitalSign": "fas fa-heart-pulse",
+        "core.Treatment": "fas fa-syringe",
+        "core.Diagnosis": "fas fa-file-medical",
+        "core.Bed": "fas fa-bed",
+        "core.Admission": "fas fa-procedures",
+        "core.Staff": "fas fa-user-md",
+        "core.InventoryItem": "fas fa-pills",
+        "core.Prescription": "fas fa-prescription-bottle-alt",
+    },
+    
+    "custom_links": {
+        "core": [{
+            "name": "Dashboard Emergenze",
+            "url": "/emergency-dashboard",
+            "icon": "fas fa-ambulance",
+            "permissions": ["auth.view_user"]
+        }]
+    },
+}
