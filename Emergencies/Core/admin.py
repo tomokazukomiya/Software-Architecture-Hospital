@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Patient, EmergencyVisit, VitalSign, Treatment, 
     Diagnosis, Bed, Admission, Staff, 
-    InventoryItem, Prescription
+    InventoryItem, Prescription, Doctor, Nurse
 )
 from django.utils import timezone
 
@@ -124,6 +124,19 @@ class PrescriptionAdmin(admin.ModelAdmin):
     search_fields = ('medication', 'visit__patient__first_name', 'visit__patient__last_name')
     raw_id_fields = ('visit', 'prescribed_by')
 
+
+class DoctorAdmin(admin.ModelAdmin):
+    list_display = ('first_name', 'last_name', 'date_of_birth', 'gender')
+    list_filter = ('badge_number', 'work_unit')
+    search_fields = ('first_name', 'last_name', 'badge_number', 'work_unit')
+
+
+class NurseAdmin(admin.ModelAdmin):
+    list_display = ('first_name', 'last_name', 'date_of_birth', 'gender')
+    list_filter = ('badge_number', 'work_unit')
+    search_fields = ('first_name', 'last_name', 'badge_number', 'work_unit')
+
+
 admin.site.register(Patient, PatientAdmin)
 admin.site.register(EmergencyVisit, EmergencyVisitAdmin)
 admin.site.register(VitalSign)
@@ -134,3 +147,5 @@ admin.site.register(Admission, AdmissionAdmin)
 admin.site.register(Staff, StaffAdmin)
 admin.site.register(InventoryItem, InventoryItemAdmin)
 admin.site.register(Prescription, PrescriptionAdmin)
+admin.site.register(Doctor, DoctorAdmin)
+admin.site.register(Nurse, NurseAdmin)

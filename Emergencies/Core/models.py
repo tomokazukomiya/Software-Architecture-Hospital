@@ -200,3 +200,71 @@ class Prescription(models.Model):
 
     def __str__(self):
         return f"{self.medication} for {self.visit.patient}"
+    
+
+
+class Doctor(models.Model):
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+        ('U', 'Unknown'),
+    ]
+
+    UNIT_CHOICES = [
+        ('ICU', 'Intensive Care Unit'),
+        ('ER', 'Emergency Room'),
+        ('CCU', 'Cardiac Care Unit'),
+        ('NICU', 'Neonatal Intensive Care Unit'),
+        ('PACU', 'Post-Anesthesia Care Unit'),
+        ('MED-SURG', 'Medical-Surgical Unit'),
+        ('L&D', 'Labor and Delivery')
+    ]
+    
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    date_of_birth = models.DateField()
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
+    address = models.TextField()
+    phone_number = models.CharField(max_length=20)
+    doctor_email = models.EmailField(max_length=50)
+    badge_number = models.CharField(max_length=5)
+    days_off = models.DateField()
+    work_unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.badge_number} {self.work_unit})"
+    
+
+
+class Nurse(models.Model):
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+        ('U', 'Unknown'),
+    ]
+
+    UNIT_CHOICES = [
+        ('ICU', 'Intensive Care Unit'),
+        ('ER', 'Emergency Room'),
+        ('CCU', 'Cardiac Care Unit'),
+        ('NICU', 'Neonatal Intensive Care Unit'),
+        ('PACU', 'Post-Anesthesia Care Unit'),
+        ('MED-SURG', 'Medical-Surgical Unit'),
+        ('L&D', 'Labor and Delivery')
+    ]
+    
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    date_of_birth = models.DateField()
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
+    address = models.TextField()
+    phone_number = models.CharField(max_length=20)
+    nurse_email = models.EmailField(max_length=50)
+    badge_number = models.CharField(max_length=5)
+    days_off = models.DateField()
+    work_unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.badge_number} {self.work_unit})"
