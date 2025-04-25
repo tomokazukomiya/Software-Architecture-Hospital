@@ -1,0 +1,290 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        {% comment %} .full-width-card {
+            margin-left: -20px;
+            margin-right: -20px;
+            border-radius: 0;
+            border-left: none;
+            border-right: none;
+        }
+        
+        .full-width-card .card-header {
+            border-radius: 0;
+        }
+        
+        .full-width-container {
+            padding-left: 0;
+            padding-right: 0;
+        } {% endcomment %}
+
+        .card-primary.card-outline {
+            border-top: 3px solid #007bff;
+        }
+        
+        .products-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .products-list > .item {
+            border-radius: .25rem;
+            background: #fff;
+            padding: 10px 0;
+            margin: 3px 0;
+        }
+        
+        .products-list > .item::after {
+            display: block;
+            clear: both;
+            content: "";
+        }
+        
+        .products-list .product-img {
+            float: left;
+            padding: 0 10px 0 0;
+        }
+        
+        .products-list .product-info {
+            margin-left: 60px;
+        }
+        
+        .products-list .product-title {
+            font-weight: 600;
+            color: #495057;
+            display: block;
+        }
+        
+        .products-list .product-description {
+            display: block;
+            color: #6c757d;
+            font-size: .875rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .info-box {
+            box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+            border-radius: .25rem;
+            background: #fff;
+            display: -ms-flexbox;
+            display: flex;
+            margin-bottom: 1rem;
+            min-height: 80px;
+            padding: .5rem;
+            position: relative;
+        }
+        
+        .info-box .info-box-icon {
+            border-radius: .25rem;
+            -ms-flex-align: center;
+            align-items: center;
+            display: -ms-flexbox;
+            display: flex;
+            font-size: 1.875rem;
+            -ms-flex-pack: center;
+            justify-content: center;
+            text-align: center;
+            width: 70px;
+        }
+        
+        .info-box .info-box-content {
+            -ms-flex: 1;
+            flex: 1;
+            padding: 5px 10px;
+        }
+        
+        .info-box .info-box-text {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: .875rem;
+        }
+        
+        .info-box .info-box-number {
+            display: block;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        /* Miglioramenti per la tabella */
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        .table {
+            width: 100%;
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            white-space: nowrap;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content_title %} {% trans 'Doctor Dashboard' %} {% endblock %}
+
+{% block content %}
+<div class="container-fluid full-width-container">
+    <div class="row">
+        <div class="col-12 px-0">
+            <div class="card card-primary card-outline full-width-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-md"></i>
+                        {% blocktrans with name=doctor.user.get_full_name %}Dr. {{ name }} - Assigned Patients{% endblocktrans %}
+                    </h3>
+                    <div class="card-tools">
+                        <span class="badge badge-{{ jazzmin_ui.button_classes.primary }}">
+                            {{ doctor.work_unit }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{% trans 'Bed' %}</th>
+                                    <th>{% trans 'Patient' %}</th>
+                                    <th>{% trans 'Age' %}</th>
+                                    <th>{% trans 'Gender' %}</th>
+                                    <th>{% trans 'Admission Time' %}</th>
+                                    <th>{% trans 'Vital Signs' %}</th>
+                                    <th>{% trans 'Diagnosis' %}</th>
+                                    <th>{% trans 'Treatments' %}</th>
+                                    <th>{% trans 'Actions' %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bed in assigned_beds %}
+                                    {% with patient=bed.patient visit=patient.emergencyvisit_set.first %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ bed.bed_number }}</strong><br>
+                                            <small class="text-muted">{{ bed.location }}</small>
+                                        </td>
+                                        <td>
+                                            <strong>{{ patient.first_name }} {{ patient.last_name }}</strong><br>
+                                            <small class="text-muted">{% if patient.blood_type %}{{ patient.blood_type }}{% endif %}</small>
+                                        </td>
+                                        <td>{{ patient.date_of_birth|timesince }}</td>
+                                        <td>{{ patient.get_gender_display }}</td>
+                                        <td>
+                                            {% if visit %}
+                                                {{ visit.arrival_time|date:"SHORT_DATETIME_FORMAT" }}<br>
+                                                <span class="badge badge-{% if visit.triage_level == 1 %}danger{% elif visit.triage_level == 2 %}warning{% else %}info{% endif %}">
+                                                    {{ visit.get_triage_level_display }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if visit and visit.vital_signs.first %}
+                                                {% with vitals=visit.vital_signs.first %}
+                                                    <small>
+                                                        HR: {{ vitals.heart_rate|default:"-" }}<br>
+                                                        BP: {{ vitals.blood_pressure_systolic|default:"-" }}/{{ vitals.blood_pressure_diastolic|default:"-" }}<br>
+                                                        Temp: {{ vitals.temperature|default:"-" }}°C<br>
+                                                        SpO2: {{ vitals.oxygen_saturation|default:"-" }}%
+                                                    </small>
+                                                {% endwith %}
+                                            {% else %}
+                                                <span class="text-muted">{% trans 'No data' %}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if visit and visit.diagnoses.first %}
+                                                {% with diagnosis=visit.diagnoses.first %}
+                                                    <strong>{{ diagnosis.code }}</strong><br>
+                                                    <small>{{ diagnosis.description|truncatechars:30 }}</small>
+                                                {% endwith %}
+                                            {% else %}
+                                                <span class="text-muted">{% trans 'No data' %}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if visit and visit.treatments.exists %}
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-xs btn-{{ jazzmin_ui.button_classes.info }} dropdown-toggle" data-toggle="dropdown">
+                                                        {{ visit.treatments.count }} {% trans 'Treatments' %}
+                                                    </button>
+                                                    <div class="dropdown-menu">
+                                                        {% for treatment in visit.treatments.all|slice:":5" %}
+                                                            <a class="dropdown-item" href="#">
+                                                                <strong>{{ treatment.get_treatment_type_display }}</strong>: {{ treatment.name }}
+                                                            </a>
+                                                        {% endfor %}
+                                                        {% if visit.treatments.count > 5 %}
+                                                            <div class="dropdown-divider"></div>
+                                                            <a class="dropdown-item" href="#">{% trans 'View all...' %}</a>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">{% trans 'None' %}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endwith %}
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">
+                                            <i class="fas fa-info-circle"></i> {% trans 'No assigned patients at the moment' %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="info-box bg-{{ jazzmin_ui.button_classes.info }}">
+                                <span class="info-box-icon"><i class="fas fa-procedures"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">{% trans 'Assigned Beds' %}</span>
+                                    <span class="info-box-number">{{ assigned_beds.count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-box bg-{{ jazzmin_ui.button_classes.success }}">
+                                <span class="info-box-icon"><i class="fas fa-heartbeat"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">{% trans 'Critical Patients' %}</span>
+                                    <span class="info-box-number">
+                                        {% with critical=assigned_beds|length %}
+                                            {{ critical }}
+                                        {% endwith %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-box bg-{{ jazzmin_ui.button_classes.warning }}">
+                                <span class="info-box-icon"><i class="fas fa-clock"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">{% trans 'Average Stay' %}</span>
+                                    <span class="info-box-number">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

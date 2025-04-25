@@ -19,9 +19,11 @@ from django.urls import path
 from django.shortcuts import redirect
 from django.views.generic import RedirectView
 from UI.views import doctor_view
+from django.urls import include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', RedirectView.as_view(url='/admin/login/', permanent=False)),
-    path('doctor_view/', doctor_view, name='doctor_view')
+    path('admin/logout/', admin.site.logout, name='logout'),
+    path('ui/', include('UI.urls'))
 ]

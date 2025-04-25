@@ -50,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'UI.middleware.StaffAccessControlMiddleware',
 ]
 
 ROOT_URLCONF = 'Emergencies.urls'
@@ -158,6 +159,8 @@ JAZZMIN_SETTINGS = {
         "core.Staff": "fas fa-user-md",
         "core.InventoryItem": "fas fa-pills",
         "core.Prescription": "fas fa-prescription-bottle-alt",
+        "core.Doctor": "fas fa-user-md",
+        "core.Nurse": "fas fa-user-md",
     },
     
     "custom_links": {

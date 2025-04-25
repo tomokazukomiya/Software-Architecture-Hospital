@@ -126,13 +126,13 @@ class PrescriptionAdmin(admin.ModelAdmin):
 
 
 class DoctorAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'date_of_birth', 'gender')
+    list_display = ('user__first_name', 'user__last_name', 'date_of_birth', 'gender')
     list_filter = ('badge_number', 'work_unit')
     search_fields = ('first_name', 'last_name', 'badge_number', 'work_unit')
 
 
 class NurseAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'date_of_birth', 'gender')
+    list_display = ('user__first_name', 'user__last_name', 'date_of_birth', 'gender')
     list_filter = ('badge_number', 'work_unit')
     search_fields = ('first_name', 'last_name', 'badge_number', 'work_unit')
 

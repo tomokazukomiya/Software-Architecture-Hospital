@@ -112,40 +112,8 @@ class Diagnosis(models.Model):
     def __str__(self):
         return f"{self.code}: {self.description} for {self.visit.patient}"
 
-class Bed(models.Model):
-    BED_STATUS_CHOICES = [
-        ('AVAIL', 'Available'),
-        ('OCCUP', 'Occupied'),
-        ('MAINT', 'Maintenance'),
-        ('RESERV', 'Reserved'),
-    ]
-    
-    bed_number = models.CharField(max_length=10, unique=True)
-    status = models.CharField(max_length=6, choices=BED_STATUS_CHOICES, default='AVAIL')
-    location = models.CharField(max_length=100)
-    is_isolation = models.BooleanField(default=False)
-    special_equipment = models.TextField(blank=True, null=True)
-    
-    def __str__(self):
-        return f"Bed {self.bed_number} ({self.get_status_display()})"
-
-class Admission(models.Model):
-    visit = models.OneToOneField(EmergencyVisit, on_delete=models.CASCADE, related_name='admission')
-    bed = models.ForeignKey(Bed, on_delete=models.SET_NULL, null=True)
-    admitted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    admission_time = models.DateTimeField(auto_now_add=True)
-    discharge_time = models.DateTimeField(blank=True, null=True)
-    admitting_diagnosis = models.TextField()
-    department = models.CharField(max_length=100)
-    notes = models.TextField(blank=True, null=True)
-
-    def __str__(self):
-        return f"Admission of {self.visit.patient} to {self.department}"
-
 class Staff(models.Model):
     ROLE_CHOICES = [
-        ('DOC', 'Doctor'),
-        ('NUR', 'Nurse'),
         ('TEC', 'Technician'),
         ('ADM', 'Administrator'),
         ('RES', 'Resident'),
@@ -200,8 +168,6 @@ class Prescription(models.Model):
 
     def __str__(self):
         return f"{self.medication} for {self.visit.patient}"
-    
-
 
 class Doctor(models.Model):
     GENDER_CHOICES = [
@@ -221,19 +187,17 @@ class Doctor(models.Model):
         ('L&D', 'Labor and Delivery')
     ]
     
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     date_of_birth = models.DateField()
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     address = models.TextField()
     phone_number = models.CharField(max_length=20)
-    doctor_email = models.EmailField(max_length=50)
     badge_number = models.CharField(max_length=5)
     days_off = models.DateField()
     work_unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.badge_number} {self.work_unit})"
+        return f"{self.user.get_full_name()} ({self.badge_number} {self.work_unit})"
     
 
 
@@ -255,16 +219,47 @@ class Nurse(models.Model):
         ('L&D', 'Labor and Delivery')
     ]
     
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     date_of_birth = models.DateField()
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     address = models.TextField()
     phone_number = models.CharField(max_length=20)
-    nurse_email = models.EmailField(max_length=50)
     badge_number = models.CharField(max_length=5)
     days_off = models.DateField()
     work_unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.badge_number} {self.work_unit})"
+        return f"{self.user.get_full_name()} ({self.badge_number} {self.work_unit})"
+    
+class Bed(models.Model):
+    BED_STATUS_CHOICES = [
+        ('AVAIL', 'Available'),
+        ('OCCUP', 'Occupied'),
+        ('MAINT', 'Maintenance'),
+        ('RESERV', 'Reserved'),
+    ]
+    
+    patient = models.ForeignKey(Patient, on_delete=models.SET_NULL, null=True, related_name='bed')
+    doctor = models.ForeignKey(Doctor, on_delete=models.SET_NULL, null=True, related_name='assigned_beds')
+    nurse = models.ForeignKey(Nurse, on_delete=models.SET_NULL, null=True, related_name='assigned_beds_nurse')
+    bed_number = models.CharField(max_length=10, unique=True)
+    status = models.CharField(max_length=6, choices=BED_STATUS_CHOICES, default='AVAIL')
+    location = models.CharField(max_length=100)
+    is_isolation = models.BooleanField(default=False)
+    special_equipment = models.TextField(blank=True, null=True)
+    
+    def __str__(self):
+        return f"Bed {self.bed_number} ({self.get_status_display()})"
+
+class Admission(models.Model):
+    visit = models.OneToOneField(EmergencyVisit, on_delete=models.CASCADE, related_name='admission')
+    bed = models.ForeignKey(Bed, on_delete=models.SET_NULL, null=True)
+    admitted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    admission_time = models.DateTimeField(auto_now_add=True)
+    discharge_time = models.DateTimeField(blank=True, null=True)
+    admitting_diagnosis = models.TextField()
+    department = models.CharField(max_length=100)
+    notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Admission of {self.visit.patient} to {self.department}"
