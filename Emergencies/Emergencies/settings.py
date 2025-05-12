@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -72,6 +73,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Emergencies.wsgi.application'
 
+# VERIFICA CON TOMMASO
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Replace with your SMTP host
+EMAIL_HOST_USER = "your_id@gmail.com"  # Your email address
+EMAIL_HOST_PASSWORD = "your host password"  # Your email password
+EMAIL_PORT = 465  # SMTP port
+EMAIL_USE_SSL = True  # Use SSL for secure connection
+
+
+#creare cartella media?
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

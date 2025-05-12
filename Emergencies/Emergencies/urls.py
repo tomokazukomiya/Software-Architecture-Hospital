@@ -20,10 +20,18 @@ from django.shortcuts import redirect
 from django.views.generic import RedirectView
 from UI.views import doctor_view
 from django.urls import include
+from Core.views import patient_list, create_patient, upload_file
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', RedirectView.as_view(url='/admin/login/', permanent=False)),
     path('admin/logout/', admin.site.logout, name='logout'),
-    path('ui/', include('UI.urls'))
+    path('ui/', include('UI.urls')),
+
+    path('core/patient/', patient_list, name='patient_list'),
+    path('core/patient/create/', create_patient, name='create_patient'),
+    path('core/patient/<int:patient_id>/upload/', upload_file, name='upload_file')
+
 ]
+

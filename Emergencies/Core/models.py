@@ -28,6 +28,15 @@ class Patient(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.date_of_birth})"
 
+class PatientFile(models.Model):
+    patient = models.ForeignKey('Patient', on_delete=models.CASCADE, related_name='files')
+    uploaded_file = models.FileField(upload_to='patient_files/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"File for {self.patient} - {self.uploaded_file.name}"
+
+
 class EmergencyVisit(models.Model):
     TRIAGE_LEVEL_CHOICES = [
         (1, 'Resuscitation (Immediate)'),
