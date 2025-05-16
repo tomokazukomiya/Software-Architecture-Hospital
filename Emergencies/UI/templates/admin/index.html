@@ -1,4 +1,4 @@
-{% extends "admin/index.html" %}
+{% extends "admin/base_site.html" %}
 {% load i18n static jazzmin %}
 {% get_jazzmin_ui_tweaks as jazzmin_ui %}
 
@@ -43,6 +43,10 @@
         height: 250px;
         margin-bottom: 20px;
     }
+
+    .text-purple {
+        color: #6f42c1 !important; /* Assicurati che questo colore sia definito */
+    }
     
     /* Jazzmin color palette */
     .bg-primary { background-color: #4e73df !important; }
@@ -66,7 +70,7 @@
     
     <div class="row">
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="dashboard-card card-emergency h-100 py-2">
+            <div class="dashboard-card card-emergency h-100">
                 <div class="info-box-content">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -84,7 +88,7 @@
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="dashboard-card card-patients h-100 py-2">
+            <div class="dashboard-card card-patients h-100">
                 <div class="info-box-content">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -102,7 +106,7 @@
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="dashboard-card card-staff h-100 py-2">
+            <div class="dashboard-card card-staff h-100">
                 <div class="info-box-content">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -120,7 +124,7 @@
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="dashboard-card card-inventory h-100 py-2">
+            <div class="dashboard-card card-inventory h-100">
                 <div class="info-box-content">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -204,7 +208,7 @@
                                     <td>
                                         {% if visit.is_admitted %}
                                             <span class="badge badge-danger">Admitted</span>
-                                        {% else %}
+                                        {% elif visit.discharge_time %}
                                             <span class="badge badge-success">Discharged</span>
                                         {% endif %}
                                     </td>
@@ -219,59 +223,70 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-
-const triageCtx = document.getElementById('triageChart').getContext('2d');
-const triageChart = new Chart(triageCtx, {
-    type: 'doughnut',
-    data: {
-        labels: {{ triage_labels|safe }},
-        datasets: [{
-            data: {{ triage_data|safe }},
-            backgroundColor: [
-                '#e74a3b', 
-                '#f6c23e', 
-                '#4e73df', 
-                '#1cc88a', 
-                '#858796'  
-            ],
-            hoverBorderColor: "rgba(234, 236, 244, 1)",
-        }],
-    },
-    options: {
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'right',
+    document.addEventListener('DOMContentLoaded', function () {
+        const triageCtx = document.getElementById('triageChart').getContext('2d');
+        const triageChart = new Chart(triageCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ triage_labels|safe }},
+                datasets: [{
+                    data: {{ triage_data|safe }},
+                    backgroundColor: [
+                        '#e74a3b',
+                        '#f6c23e',
+                        '#4e73df',
+                        '#1cc88a',
+                        '#858796'
+                    ],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
             }
-        }
-    }
-});
+        });
 
-const bedCtx = document.getElementById('bedChart').getContext('2d');
-const bedChart = new Chart(bedCtx, {
-    type: 'bar',
-    data: {
-        labels: ['Available', 'Occupied', 'Maintenance'],
-        datasets: [{
-            label: 'Beds',
-            data: {{ bed_data|safe }},
-            backgroundColor: [
-                '#1cc88a', 
-                '#e74a3b', 
-                '#f6c23e' 
-            ],
-        }],
-    },
-    options: {
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true
+        const bedCtx = document.getElementById('bedChart').getContext('2d');
+        const bedChart = new Chart(bedCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Available', 'Occupied', 'Maintenance'],
+                datasets: [{
+                    label: 'Beds',
+                    data: {{ bed_data|safe }},
+                    backgroundColor: [
+                        '#1cc88a',
+                        '#e74a3b',
+                        '#f6c23e'
+                    ],
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
             }
-        }
-    }
-});
+        });
+        console.log("Dashboard charts JS initialized.");
+    });
 </script>
 {% endblock %}

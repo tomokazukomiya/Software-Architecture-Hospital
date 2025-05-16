@@ -1,9 +1,10 @@
 from django.template.response import TemplateResponse
 from django.utils.translation import gettext_lazy as _
-from Core.models import Bed, Doctor#, Email
+from Core.models import Bed, Doctor, EmergencyVisit, Patient, Staff, InventoryItem #, Email
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import get_object_or_404
+from django.db.models import Count, F
 
 @login_required
 @user_passes_test(lambda u: u.is_staff)
@@ -29,15 +30,3 @@ def doctor_view(request, doctor_id=None):
         }
 
         return TemplateResponse(request, 'admin/doctor_view.html', context)
-
-def send_test_email(email):
-    template = 'email/test_email.html'
-    context = {
-        'subject': "This is a test email",
-        'to_email': email,
-    }
-    send_email.delay(template, context)  # Delay execution using Celery (optional)
-
-
-
-

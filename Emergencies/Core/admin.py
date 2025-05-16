@@ -46,14 +46,13 @@ class DiagnosisInline(admin.TabularInline):
     readonly_fields = ('diagnosed_at',)
 
 class EmergencyVisitAdmin(admin.ModelAdmin):
-    list_display = ('patient', 'arrival_time', 'get_triage_level_display', 'discharge_time', 'is_admitted')
-    list_filter = ('triage_level', 'is_admitted', 'arrival_time')
+    list_display = ('patient', 'get_triage_level_display', 'discharge_time', 'is_admitted')
+    list_filter = ('triage_level', 'is_admitted')
     search_fields = ('patient__first_name', 'patient__last_name', 'chief_complaint')
-    date_hierarchy = 'arrival_time'
     inlines = [VitalSignInline, TreatmentInline, DiagnosisInline]
     fieldsets = (
         (None, {
-            'fields': ('patient', 'arrival_time', 'triage_level', 'triage_nurse')
+            'fields': ('patient', 'triage_level', 'triage_nurse')
         }),
         ('Medical Information', {
             'fields': ('chief_complaint', 'initial_observation')
@@ -128,13 +127,13 @@ class PrescriptionAdmin(admin.ModelAdmin):
 class DoctorAdmin(admin.ModelAdmin):
     list_display = ('user__first_name', 'user__last_name', 'date_of_birth', 'gender')
     list_filter = ('badge_number', 'work_unit')
-    search_fields = ('first_name', 'last_name', 'badge_number', 'work_unit')
+    search_fields = ('user__first_name', 'user__last_name', 'badge_number', 'work_unit')
 
 
 class NurseAdmin(admin.ModelAdmin):
     list_display = ('user__first_name', 'user__last_name', 'date_of_birth', 'gender')
     list_filter = ('badge_number', 'work_unit')
-    search_fields = ('first_name', 'last_name', 'badge_number', 'work_unit')
+    search_fields = ('user__first_name', 'user__last_name', 'badge_number', 'work_unit')
 
 
 admin.site.register(Patient, PatientAdmin)
