@@ -30,8 +30,7 @@ A comprehensive Django-based management system for hospital emergency department
 ## Installation
 
 1. Clone the repository:
-   git clone https://github.com/yourrepo/hospital-er-management.git
-   cd Emergencies
+   git clone https://github.com/tomokazukomiya/Software-Architecture-Hospital.git
 
 2. Run:
    docker-compose up --build

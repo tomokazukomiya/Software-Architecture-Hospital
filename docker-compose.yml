@@ -7,9 +7,8 @@ services:
       - ./Emergencies:/app
     environment:
       - DJANGO_SUPERUSER_USERNAME=pietro_ferrara
-      - DJANGO_SUPERUSER_EMAIL=pietro.ferrara@unive.it
+      - DJANGO_SUPERUSER_EMAIL=pietro.ferrara@test.it
       - DJANGO_SUPERUSER_PASSWORD=Software_Architectures
     command: >
-      sh -c "python manage.py migrate &&
-             python manage.py createsuperuser --noinput --username $$DJANGO_SUPERUSER_USERNAME --email $$DJANGO_SUPERUSER_EMAIL || true &&
+      sh -c "python manage.py createsuperuser --noinput --username $$DJANGO_SUPERUSER_USERNAME --email $$DJANGO_SUPERUSER_EMAIL || true &&
              python manage.py runserver 0.0.0.0:8000"

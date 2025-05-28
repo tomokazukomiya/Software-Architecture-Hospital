@@ -17,6 +17,10 @@ RUN chown -R app:app /app
 
 USER app
 
+COPY --chown=app:app Emergencies/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 8000
 
+ENTRYPOINT ["sh", "/app/entrypoint.sh"]
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "Emergencies.wsgi:application"]
