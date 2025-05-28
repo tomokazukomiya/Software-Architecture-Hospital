@@ -56,36 +56,18 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'Emergencies.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'UI/templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
 WSGI_APPLICATION = 'Emergencies.wsgi.application'
 
-# VERIFICA CON TOMMASO
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Replace with your SMTP host
-EMAIL_HOST_USER = "your_id@gmail.com"  # Your email address
-EMAIL_HOST_PASSWORD = "your host password"  # Your email password
-EMAIL_PORT = 465  # SMTP port
-EMAIL_USE_SSL = True  # Use SSL for secure connection
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'  # Replace with your SMTP host
+# EMAIL_HOST_USER = "your_id@gmail.com"  # Your email address
+# EMAIL_HOST_PASSWORD = "your host password"  # Your email password
+# EMAIL_PORT = 465  # SMTP port
+# EMAIL_USE_SSL = True  # Use SSL for secure connection
 
-
-#creare cartella media?
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -148,6 +130,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/admin/'
 LOGOUT_REDIRECT_URL = '/admin/' 
 
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'UI/templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'Emergencies.context_processor.get_dashboard_infographics_data',
+            ],
+        },
+    }
+]
+
 JAZZMIN_SETTINGS = {
     "show_ui_builder": True,
     "site_title": "Emergencies",
@@ -161,28 +160,21 @@ JAZZMIN_SETTINGS = {
     "icons": {
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
-        "auth.Group": "fas fa-users",
+        "auth.group": "fas fa-users",
 
-        "core.Patient": "fas fa-user-injured",
-        "core.EmergencyVisit": "fas fa-truck-medical",
-        "core.VitalSign": "fas fa-heart-pulse",
-        "core.Treatment": "fas fa-syringe",
-        "core.Diagnosis": "fas fa-file-medical",
-        "core.Bed": "fas fa-bed",
-        "core.Admission": "fas fa-procedures",
-        "core.Staff": "fas fa-user-md",
-        "core.InventoryItem": "fas fa-pills",
-        "core.Prescription": "fas fa-prescription-bottle-alt",
-        "core.Doctor": "fas fa-user-md",
-        "core.Nurse": "fas fa-user-md",
+        "core.patient": "fas fa-user-injured",
+        "core.emergencyvisit": "fas fa-truck-medical",
+        "core.vitalsign": "fas fa-heart-pulse",
+        "core.treatment": "fas fa-syringe",
+        "core.diagnosis": "fas fa-file-medical",
+        "core.bed": "fas fa-bed",
+        "core.admission": "fas fa-procedures",
+        "core.staff": "fas fa-user-md",
+        "core.inventoryitem": "fas fa-pills",
+        "core.prescription": "fas fa-prescription-bottle-alt",
+        "core.doctor": "fas fa-user-md",
+        "core.nurse": "fas fa-user-nurse",  
     },
-    
-    "custom_links": {
-        "core": [{
-            "name": "Dashboard Emergenze",
-            "url": "/emergency-dashboard",
-            "icon": "fas fa-ambulance",
-            "permissions": ["auth.view_user"]
-        }]
-    },
+
+    "custom_menu": "Emergencies.context_processor.get_jazzmin_custom_menu",
 }

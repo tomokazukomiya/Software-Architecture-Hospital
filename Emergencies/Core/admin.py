@@ -134,17 +134,3 @@ class NurseAdmin(admin.ModelAdmin):
     list_display = ('user__first_name', 'user__last_name', 'date_of_birth', 'gender')
     list_filter = ('badge_number', 'work_unit')
     search_fields = ('user__first_name', 'user__last_name', 'badge_number', 'work_unit')
-
-
-admin.site.register(Patient, PatientAdmin)
-admin.site.register(EmergencyVisit, EmergencyVisitAdmin)
-admin.site.register(VitalSign)
-admin.site.register(Treatment, TreatmentAdmin)
-admin.site.register(Diagnosis, DiagnosisAdmin)
-admin.site.register(Bed, BedAdmin)
-admin.site.register(Admission, AdmissionAdmin)
-admin.site.register(Staff, StaffAdmin)
-admin.site.register(InventoryItem, InventoryItemAdmin)
-admin.site.register(Prescription, PrescriptionAdmin)
-admin.site.register(Doctor, DoctorAdmin)
-admin.site.register(Nurse, NurseAdmin)
