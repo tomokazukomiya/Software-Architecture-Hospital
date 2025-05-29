@@ -43,6 +43,10 @@ class StaffAccessControlMiddleware:
             return default
 
     def __call__(self, request):
+        if request.path.startswith('/api/'):
+            logger.debug(f"Allowing API request to pass through: {request.path}")
+            return self.get_response(request)
+
         if request.path == reverse('admin:logout'):
             logger.debug(f"Allowing logout request for {request.user}")
             return self.get_response(request)

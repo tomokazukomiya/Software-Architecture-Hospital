@@ -30,3 +30,6 @@ def doctor_view(request, doctor_id=None):
         }
 
         return TemplateResponse(request, 'admin/doctor_view.html', context)
+
+def api_tester(request):
+     return render(request, 'admin/api_tester.html')

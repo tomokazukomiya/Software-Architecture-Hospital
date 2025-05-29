@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Management Microservices API Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            flex: 1;
+            min-width: 45%; /* Adjust for better layout */
+        }
+        .auth-panel {
+            background: #e8f4f8;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        input[type="date"],
+        input[type="file"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .copy-button {
+            background-color: #7f8c8d; /* Asbestos */
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .copy-button:hover {
+            background-color: #95a5a6; /* Concrete */
+        }
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .curl-example {
+            margin-top: 10px;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 10px 16px;
+            transition: 0.3s;
+            color: #333;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .tabcontent {
+            display: none;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            background: white;
+        }
+        .token-display {
+            word-break: break-all;
+            background: #f0f0f0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hospital Management Microservices API Test</h1>
+    
+    <div class="container">
+        <div class="panel auth-panel">
+            <h2>Authentication</h2>
+            
+            <div class="tab">
+                <button class="tablinks active" onclick="openTab(event, 'login-tab')">Login</button>
+                <button class="tablinks" onclick="openTab(event, 'register-tab')">Register</button>
+            </div>
+            
+            <div id="login-tab" class="tabcontent" style="display: block;">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" placeholder="username">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="password">
+                </div>
+                <button onclick="login()">Login</button>
+                <div class="curl-example">
+                    <h4>cURL Example:</h4>
+                    <button class="copy-button" onclick="copyToClipboard('login-curl')">Copy</button>
+                    <pre id="login-curl">
+curl -X POST http://localhost:8000/api/auth/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "your_username", "password": "your_password"}'</pre>
+                </div>
+            </div>
+            
+            <div id="register-tab" class="tabcontent">
+                <div class="form-group">
+                    <label for="reg-username">Username</label>
+                    <input type="text" id="reg-username" placeholder="username">
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">Email</label>
+                    <input type="email" id="reg-email" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" placeholder="password">
+                </div>
+                <div class="form-group">
+                    <label for="reg-password2">Confirm Password</label>
+                    <input type="password" id="reg-password2" placeholder="confirm password">
+                </div>
+                <div class="form-group">
+                    <label for="reg-first-name">First Name</label>
+                    <input type="text" id="reg-first-name" placeholder="First Name">
+                </div>
+                <div class="form-group">
+                    <label for="reg-last-name">Last Name</label>
+                    <input type="text" id="reg-last-name" placeholder="Last Name">
+                </div>
+                <button onclick="register()">Register</button>
+                <div class="curl-example">
+                    <h4>cURL Example:</h4>
+                    <button class="copy-button" onclick="copyToClipboard('register-curl')">Copy</button>
+                    <pre id="register-curl">
+curl -X POST http://localhost:8000/api/auth/register/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "newuser",
+    "email": "user@example.com",
+    "password": "securepassword123",
+    "password2": "securepassword123",
+    "first_name": "John",
+    "last_name": "Doe"
+  }'</pre>
+                </div>
+            </div>
+            
+            <div class="response" id="auth-response">
+                <h4>Response:</h4>
+                <pre id="auth-response-data">Login or register to get a token</pre>
+            </div>
+            
+            <div class="form-group" id="token-display-container" style="display: none;">
+                <label>Current Token:</label>
+                <div class="token-display" id="current-token">No token</div>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>API Endpoint Test</h2>
+            
+            <div class="form-group">
+                <label for="endpoint-select">Select Endpoint</label>
+                <select id="endpoint-select" onchange="updateEndpointForm()">
+                    <option value="">-- Select --</option>
+                    <option value="patients">/patients/</option>
+                    <option value="patient-files">/patient-files/</option>
+                    <option value="emergency-visits">/emergency-visits/</option>
+                    <option value="vital-signs">/vital-signs/</option>
+                    <option value="treatments">/treatments/</option>
+                    <option value="diagnoses">/diagnoses/</option>
+                    <option value="staff">/staff/</option>
+                    <option value="inventory">/inventory/</option>
+                    <option value="prescriptions">/prescriptions/</option>
+                    <option value="doctors">/doctors/</option>
+                    <option value="nurses">/nurses/</option>
+                    <option value="beds">/beds/</option>
+                    <option value="admissions">/admissions/</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="http-method">HTTP Method</label>
+                <select id="http-method">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="PATCH">PATCH</option>
+                    <option value="DELETE">DELETE</option>
+                </select>
+            </div>
+            
+            <div id="endpoint-form">
+                <p>Select an endpoint to view the specific form</p>
+            </div>
+            
+            <button onclick="callApi()">Call API</button>
+            
+            <div class="curl-example">
+                <h4>cURL Example:</h4>
+                <button class="copy-button" onclick="copyToClipboard('api-curl-example')">Copy</button>
+                <pre id="api-curl-example">
+Select an endpoint to see the cURL example
+</pre>
+            </div>
+            
+            <div class="response" id="api-response">
+                <h4>Response:</h4>
+                <pre id="api-response-data">The API response will appear here</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = null;
+        let currentUser = null;
+        
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        async function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                const response = await fetch('/api/auth/login/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password }),
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    currentToken = data.token;
+                    currentUser = data.user;
+                    updateTokenDisplay();
+                    document.getElementById('auth-response-data').textContent = JSON.stringify(data, null, 2);
+                    alert('Login successful!');
+                } else {
+                    throw new Error(data.detail || JSON.stringify(data) || 'Login failed');
+                }
+            } catch (error) {
+                document.getElementById('auth-response-data').textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        async function register() {
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const password2 = document.getElementById('reg-password2').value;
+            const firstName = document.getElementById('reg-first-name').value;
+            const lastName = document.getElementById('reg-last-name').value;
+            
+            if (password !== password2) {
+                document.getElementById('auth-response-data').textContent = 'Passwords do not match';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/register/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username, email, password, password2,
+                        first_name: firstName, last_name: lastName
+                    }),
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    currentToken = data.token;
+                    currentUser = data.user;
+                    updateTokenDisplay();
+                    document.getElementById('auth-response-data').textContent = JSON.stringify(data, null, 2);
+                    alert('Registration completed successfully!');
+                } else {
+                    throw new Error(JSON.stringify(data) || 'Registration failed');
+                }
+            } catch (error) {
+                document.getElementById('auth-response-data').textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        function updateTokenDisplay() {
+            const container = document.getElementById('token-display-container');
+            const display = document.getElementById('current-token');
+            if (currentToken) {
+                container.style.display = 'block';
+                display.textContent = currentToken;
+            } else {
+                container.style.display = 'none';
+                display.textContent = 'No token';
+            }
+        }
+        
+        function copyToClipboard(elementId) {
+            const preElement = document.getElementById(elementId);
+            if (preElement) {
+                const textToCopy = preElement.innerText || preElement.textContent;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    alert('cURL command copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    alert('Failed to copy cURL command. See console for details.');
+                });
+            } else {
+                console.error('Element with ID ' + elementId + ' not found.');
+            }
+        }
+
+        function updateEndpointForm() {
+            const endpoint = document.getElementById('endpoint-select').value;
+            const formContainer = document.getElementById('endpoint-form');
+            const curlExample = document.getElementById('api-curl-example');
+            
+            if (!endpoint) {
+                formContainer.innerHTML = '<p>Select an endpoint to view the specific form</p>';
+                curlExample.textContent = 'Select an endpoint to see the cURL example';
+                return;
+            }
+            
+            let formHtml = '';
+            let curlText = '';
+            
+            switch(endpoint) {
+                case 'patients':
+                    formHtml = `
+                        <div class="form-group"><label for="first-name">First Name</label><input type="text" id="first-name"></div>
+                        <div class="form-group"><label for="last-name">Last Name</label><input type="text" id="last-name"></div>
+                        <div class="form-group"><label for="date-of-birth">Date of Birth (YYYY-MM-DD)</label><input type="date" id="date-of-birth"></div>
+                        <div class="form-group"><label for="gender">Gender (M/F/O/U)</label><input type="text" id="gender" maxlength="1"></div>
+                        <div class="form-group"><label for="address">Address</label><textarea id="address"></textarea></div>
+                        <div class="form-group"><label for="phone-number">Phone Number</label><input type="text" id="phone-number"></div>
+                        <div class="form-group"><label for="emergency-contact-name">Emergency Contact Name</label><input type="text" id="emergency-contact-name"></div>
+                        <div class="form-group"><label for="emergency-contact-phone">Emergency Contact Phone</label><input type="text" id="emergency-contact-phone"></div>
+                        <div class="form-group"><label for="blood-type">Blood Type</label><input type="text" id="blood-type"></div>
+                        <div class="form-group"><label for="allergies">Allergies</label><textarea id="allergies"></textarea></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/patients/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "first_name": "John",
+    "last_name": "Doe",
+    "date_of_birth": "1990-01-15",
+    "gender": "M",
+    "address": "123 Main St, Anytown, USA",
+    "phone_number": "555-1234",
+    "emergency_contact_name": "Jane Doe",
+    "emergency_contact_phone": "555-5678",
+    "blood_type": "O+",
+    "allergies": "Peanuts"
+  }'`;
+                    break;
+                
+                case 'patient-files':
+                    formHtml = `
+                        <div class="form-group"><label for="patient">Patient ID</label><input type="number" id="patient"></div>
+                        <div class="form-group"><label for="uploaded-file">File</label><input type="file" id="uploaded-file"></div>
+                        <div class="form-group"><label for="description">Description (Optional)</label><input type="text" id="description"></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/patient-files/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -F "patient=1" \\
+  -F "uploaded_file=@/path/to/your/file.pdf" \\
+  -F "description=X-Ray Image"`;
+                    break;
+
+                case 'emergency-visits':
+                    formHtml = `
+                        <div class="form-group"><label for="patient">Patient ID</label><input type="number" id="patient"></div>
+                        <div class="form-group"><label for="triage-level">Triage Level (1-5)</label><input type="number" id="triage-level" min="1" max="5"></div>
+                        <div class="form-group"><label for="chief-complaint">Chief Complaint</label><textarea id="chief-complaint"></textarea></div>
+                        <div class="form-group"><label for="attending-physician">Attending Physician ID (User ID)</label><input type="number" id="attending-physician"></div>
+                        <div class="form-group"><label for="triage-nurse">Triage Nurse ID (User ID)</label><input type="number" id="triage-nurse"></div>
+                        <div class="form-group"><label for="is-admitted">Is Admitted (true/false)</label><input type="text" id="is-admitted" placeholder="false"></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/emergency-visits/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "patient": 1,
+    "triage_level": 3,
+    "chief_complaint": "Severe abdominal pain",
+    "attending_physician": 2,
+    "triage_nurse": 3,
+    "is_admitted": false
+  }'`;
+                    break;
+                
+                case 'vital-signs':
+                    formHtml = `
+                        <div class="form-group"><label for="visit">Visit ID</label><input type="number" id="visit"></div>
+                        <div class="form-group"><label for="recorded-by">Recorded By (User ID)</label><input type="number" id="recorded-by"></div>
+                        <div class="form-group"><label for="temperature">Temperature (°C)</label><input type="text" id="temperature" placeholder="37.0"></div>
+                        <div class="form-group"><label for="heart-rate">Heart Rate (bpm)</label><input type="number" id="heart-rate" placeholder="75"></div>
+                        <div class="form-group"><label for="blood-pressure-systolic">BP Systolic (mmHg)</label><input type="number" id="blood-pressure-systolic" placeholder="120"></div>
+                        <div class="form-group"><label for="blood-pressure-diastolic">BP Diastolic (mmHg)</label><input type="number" id="blood-pressure-diastolic" placeholder="80"></div>
+                        <div class="form-group"><label for="respiratory-rate">Respiratory Rate (breaths/min)</label><input type="number" id="respiratory-rate" placeholder="16"></div>
+                        <div class="form-group"><label for="oxygen-saturation">Oxygen Saturation (%)</label><input type="text" id="oxygen-saturation" placeholder="98.0"></div>
+                        <div class="form-group"><label for="pain-level">Pain Level (0-10)</label><input type="number" id="pain-level" min="0" max="10" placeholder="5"></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/vital-signs/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "visit": 1,
+    "recorded_by": 3,
+    "temperature": "38.5",
+    "heart_rate": 90,
+    "blood_pressure_systolic": 130,
+    "blood_pressure_diastolic": 85,
+    "respiratory_rate": 20,
+    "oxygen_saturation": "95.0",
+    "pain_level": 7
+  }'`;
+                    break;
+                
+                case 'treatments':
+                     formHtml = `
+                        <div class="form-group"><label for="visit">Visit ID</label><input type="number" id="visit"></div>
+                        <div class="form-group"><label for="treatment-type">Treatment Type (MED/PROC/TEST/OTHER)</label><input type="text" id="treatment-type" placeholder="MED"></div>
+                        <div class="form-group"><label for="name">Treatment Name/Code</label><input type="text" id="name"></div>
+                        <div class="form-group"><label for="description">Description</label><textarea id="description"></textarea></div>
+                        <div class="form-group"><label for="administered-by">Administered By (User ID)</label><input type="number" id="administered-by"></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/treatments/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "visit": 1,
+    "treatment_type": "PROC",
+    "name": "Wound Cleaning",
+    "description": "Cleaned and dressed a minor laceration on the arm.",
+    "administered_by": 3
+  }'`;
+                    break;
+
+                case 'diagnoses':
+                    formHtml = `
+                        <div class="form-group"><label for="visit">Visit ID</label><input type="number" id="visit"></div>
+                        <div class="form-group"><label for="code">Diagnosis Code (e.g., ICD-10)</label><input type="text" id="code"></div>
+                        <div class="form-group"><label for="description">Description</label><textarea id="description"></textarea></div>
+                        <div class="form-group"><label for="diagnosed-by">Diagnosed By (User ID)</label><input type="number" id="diagnosed-by"></div>
+                        <div class="form-group"><label for="is-primary">Is Primary Diagnosis? (true/false)</label><input type="text" id="is-primary" placeholder="true"></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/diagnoses/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "visit": 1,
+    "code": "S51.0",
+    "description": "Open wound of elbow",
+    "diagnosed_by": 2,
+    "is_primary": true
+  }'`;
+                    break;
+
+                case 'staff': 
+                    formHtml = `
+                        <div class="form-group"><label for="user">User ID (For existing User)</label><input type="number" id="user"></div>
+                        <div class="form-group"><label for="role">Role (e.g., TEC, ADM, RES, INT, DOC, NUR)</label><input type="text" id="role"></div>
+                        <div class="form-group"><label for="department">Department</label><input type="text" id="department"></div>
+                        <div class="form-group"><label for="contact-number">Contact Number</label><input type="text" id="contact-number"></div>
+                        <div class="form-group"><label for="hire-date">Hire Date (YYYY-MM-DD)</label><input type="date" id="hire-date"></div>
+                    `;
+                     curlText = `curl -X POST http://localhost:8000/api/staff/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "user": 4, 
+    "role": "TEC",
+    "department": "Radiology",
+    "contact_number": "555-0101",
+    "hire_date": "2023-01-15"
+  }'`;
+                    break;
+
+                case 'inventory': 
+                    formHtml = `
+                        <div class="form-group"><label for="name">Item Name</label><input type="text" id="name"></div>
+                        <div class="form-group"><label for="category">Category (MED/EQUIP/SUPP/OTHER)</label><input type="text" id="category"></div>
+                        <div class="form-group"><label for="quantity">Quantity</label><input type="number" id="quantity"></div>
+                        <div class="form-group"><label for="unit">Unit (e.g., box, item, ml)</label><input type="text" id="unit"></div>
+                        <div class="form-group"><label for="minimum-stock">Minimum Stock Level</label><input type="number" id="minimum-stock"></div>
+                        <div class="form-group"><label for="expiry-date">Expiry Date (YYYY-MM-DD)</label><input type="date" id="expiry-date"></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/inventory/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "Amoxicillin 250mg",
+    "category": "MED",
+    "quantity": 50,
+    "unit": "box",
+    "minimum_stock": 10,
+    "expiry_date": "2025-12-31"
+  }'`;
+                    break;
+                
+                case 'prescriptions':
+                    formHtml = `
+                        <div class="form-group"><label for="visit">Visit ID</label><input type="number" id="visit"></div>
+                        <div class="form-group"><label for="medication-name">Medication Name</label><input type="text" id="medication-name"></div>
+                        <div class="form-group"><label for="dosage">Dosage (e.g., 500mg, 1 tablet)</label><input type="text" id="dosage"></div>
+                        <div class="form-group"><label for="frequency">Frequency (e.g., BID, TID, QID)</label><input type="text" id="frequency"></div>
+                        <div class="form-group"><label for="route">Route (e.g., PO, IV, IM)</label><input type="text" id="route"></div>
+                        <div class="form-group"><label for="duration-days">Duration (days)</label><input type="number" id="duration-days"></div>
+                        <div class="form-group"><label for="prescribed-by">Prescribed By (User ID)</label><input type="number" id="prescribed-by"></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/prescriptions/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "visit": 1,
+    "medication_name": "Ibuprofen",
+    "dosage": "400mg",
+    "frequency": "TID",
+    "route": "PO",
+    "duration_days": 5,
+    "prescribed_by": 2
+  }'`;
+                    break;
+
+                case 'doctors':
+                    formHtml = `
+                        <div class="form-group"><label for="user">User ID (For existing User)</label><input type="number" id="user"></div>
+                        <div class="form-group"><label for="specialization">Specialization</label><input type="text" id="specialization"></div>
+                        <div class="form-group"><label for="license-number">License Number</label><input type="text" id="license-number"></div>
+                        <div class="form-group"><label for="contact-number">Contact Number</label><input type="text" id="contact-number"></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/doctors/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "user": 5, 
+    "specialization": "Cardiology",
+    "license_number": "DOC12345",
+    "contact_number": "555-0202"
+  }'`;
+                    break;
+
+                case 'nurses':
+                    formHtml = `
+                        <div class="form-group"><label for="user">User ID (For existing User)</label><input type="number" id="user"></div>
+                        <div class="form-group"><label for="department">Department</label><input type="text" id="department"></div>
+                        <div class="form-group"><label for="shift">Shift (e.g., Day, Night, Evening)</label><input type="text" id="shift"></div>
+                        <div class="form-group"><label for="contact-number">Contact Number</label><input type="text" id="contact-number"></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/nurses/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "user": 6,
+    "department": "Emergency",
+    "shift": "Night",
+    "contact_number": "555-0303"
+  }'`;
+                    break;
+
+                case 'beds':
+                    formHtml = `
+                        <div class="form-group"><label for="bed-number">Bed Number</label><input type="text" id="bed-number"></div>
+                        <div class="form-group"><label for="status">Status (AVAIL/OCCUP/MAINT/RESERV)</label><input type="text" id="status" value="AVAIL"></div>
+                        <div class="form-group"><label for="location">Location (e.g., Ward A, Room 101)</label><input type="text" id="location"></div>
+                        <div class="form-group"><label for="patient">Patient ID (Optional, if OCCUP)</label><input type="number" id="patient"></div>
+                        <div class="form-group"><label for="doctor">Assigned Doctor ID </label><input type="number" id="doctor"></div>
+                        <div class="form-group"><label for="nurse">Assigned Nurse ID </label><input type="number" id="nurse"></div>
+                        <div class="form-group"><label for="is-isolation">Is Isolation Bed? (true/false)</label><input type="text" id="is-isolation" placeholder="false"></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/beds/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "bed_number": "ER-B12",
+    "status": "AVAIL",
+    "location": "Emergency Ward B",
+    "is_isolation": false
+  }'`;
+                    break;
+
+                case 'admissions':
+                    formHtml = `
+                        <div class="form-group"><label for="visit">Emergency Visit ID</label><input type="number" id="visit"></div>
+                        <div class="form-group"><label for="bed">Bed ID</label><input type="number" id="bed"></div>
+                        <div class="form-group"><label for="reason">Reason for Admission</label><textarea id="reason"></textarea></div>
+                        <div class="form-group"><label for="admitted-by">Admitted By (User ID)</label><input type="number" id="admitted-by"></div>
+                    `;
+                    curlText = `curl -X POST http://localhost:8000/api/admissions/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "visit": 1,
+    "bed": 2,
+    "reason": "Observation post-trauma",
+    "admitted_by": 2
+  }'`;
+                    break;
+
+                default:
+                    formHtml = `<p>Form for ${endpoint} not implemented yet.</p>`;
+                    curlText = `curl -X GET http://localhost:8000/api/${endpoint}/ \\
+  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}"`;
+            }
+            
+            formContainer.innerHTML = formHtml;
+            curlExample.textContent = curlText;
+        }
+        
+        async function callApi() {
+            if (!currentToken) {
+                alert('You must login first!');
+                return;
+            }
+            
+            const endpoint = document.getElementById('endpoint-select').value;
+            const method = document.getElementById('http-method').value;
+            
+            if (!endpoint) {
+                alert('Select an endpoint');
+                return;
+            }
+            
+            let url = `/api/${endpoint}/`;
+            let requestBody = null;
+            let headers = {
+                'Authorization': `Token ${currentToken}`
+            };
+            
+            if (method === 'GET' || method === 'DELETE') {
+                const idInput = document.getElementById('id-for-operation'); 
+                let id = '';
+                if (idInput && idInput.value) {
+                     id = idInput.value;
+                } else {
+                    id = prompt('Enter ID for GET/DELETE (leave empty for list/all)', '');
+                }
+                if (id) {
+                    url += `${id}/`;
+                }
+            }
+            
+            if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+                if (endpoint === 'patient-files' && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+                    const formData = new FormData();
+                    const inputs = document.querySelectorAll('#endpoint-form input, #endpoint-form textarea, #endpoint-form select');
+                    inputs.forEach(input => {
+                        const key = input.id.replace(/-/g, '_');
+                        if (input.type === 'file' && input.files.length > 0) {
+                            formData.append(key, input.files[0]);
+                        } else if (input.type !== 'file' && input.value) {
+                            formData.append(key, input.value);
+                        }
+                    });
+                    requestBody = formData;
+                } else {
+                    const jsonData = {};
+                    const inputs = document.querySelectorAll('#endpoint-form input, #endpoint-form textarea, #endpoint-form select');
+                    inputs.forEach(input => {
+                        const key = input.id.replace(/-/g, '_'); 
+                        if (input.type === 'checkbox') {
+                            jsonData[key] = input.checked;
+                        } else if (input.value) {
+                            if (input.value.toLowerCase() === 'true') {
+                                jsonData[key] = true;
+                            } else if (input.value.toLowerCase() === 'false') {
+                                jsonData[key] = false;
+                            } else if (input.type === 'number' && input.value !== '') {
+                                jsonData[key] = parseFloat(input.value);
+                            }
+                            else {
+                                jsonData[key] = input.value;
+                            }
+                        }
+                    });
+                    requestBody = JSON.stringify(jsonData);
+                    headers['Content-Type'] = 'application/json';
+                }
+            }
+            
+            try {
+                const response = await fetch(url, {
+                    method,
+                    headers: headers,
+                    body: (method !== 'GET' && method !== 'DELETE') ? requestBody : null,
+                });
+                
+                let responseDataText;
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const data = await response.json();
+                    responseDataText = JSON.stringify(data, null, 2);
+                } else {
+                    responseDataText = await response.text();
+                }
+                document.getElementById('api-response-data').textContent = `Status: ${response.status}\n\n${responseDataText}`;
+                
+                updateCurlExample(endpoint, method, requestBody, headers);
+                
+            } catch (error) {
+                document.getElementById('api-response-data').textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        function updateCurlExample(endpoint, method, body, headers = {}) {
+            let curlText = `curl -X ${method} http://localhost:8000/api/${endpoint}/`;
+            
+
+            const idInput = document.getElementById('id-for-operation');
+            if (idInput && idInput.value && (method === 'GET' || method === 'DELETE' || method === 'PUT' || method === 'PATCH')) {
+                 curlText = `curl -X ${method} http://localhost:8000/api/${endpoint}/${idInput.value}/`;
+            }
+            
+            curlText += ` \\\n  -H "Authorization: Token ${currentToken || 'YOUR_TOKEN_HERE'}"`;
+
+            if (headers['Content-Type']) {
+                 curlText += ` \\\n  -H "Content-Type: ${headers['Content-Type']}"`;
+            }
+            
+            if (method !== 'GET' && method !== 'DELETE' && body) {
+                if (body instanceof FormData) {
+
+                    curlText += ` \\\n  # ... (FormData with -F flags, see specific endpoint example above)`;
+                } else if (typeof body === 'string') {
+                    curlText += ` \\\n  -d '${body}'`;
+                }
+            }
+            
+            document.getElementById('api-curl-example').textContent = curlText;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            openTab({ currentTarget: document.querySelector('.tablinks.active') }, 'login-tab');
+        });
+    </script>
+</body>
+</html>

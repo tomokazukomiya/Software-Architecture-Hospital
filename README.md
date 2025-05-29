@@ -37,3 +37,6 @@ A comprehensive Django-based management system for hospital emergency department
 
 3. Connect:
   http://localhost:8000/admin
+
+4. APIs Testing:
+  http://localhost:8000/ui/api_tester

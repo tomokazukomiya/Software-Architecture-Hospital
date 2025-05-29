@@ -25,6 +25,7 @@ from UI.admin import custom_site
 urlpatterns = [
     path('admin/', custom_site.urls),
     path('', RedirectView.as_view(url='/admin/login/', permanent=False)),
+    path('api/', include('Core.urls')),
     path('ui/', include('UI.urls')),
     path('core/patient/', patient_list, name='patient_list'),
     path('core/patient/create/', create_patient, name='create_patient'),
