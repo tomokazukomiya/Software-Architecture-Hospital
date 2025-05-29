@@ -1,6 +1,7 @@
 services:
   web:
     build: .
+    container_name: web_service
     ports:
       - "8000:8000"
     volumes:
@@ -9,6 +10,26 @@ services:
       - DJANGO_SUPERUSER_USERNAME=pietro_ferrara
       - DJANGO_SUPERUSER_EMAIL=pietro.ferrara@test.it
       - DJANGO_SUPERUSER_PASSWORD=Software_Architectures
+    restart: unless-stopped
     command: >
-      sh -c "python manage.py createsuperuser --noinput --username $$DJANGO_SUPERUSER_USERNAME --email $$DJANGO_SUPERUSER_EMAIL || true &&
+      sh -c "python manage.py migrate &&
+             python manage.py createsuperuser --noinput --username $$DJANGO_SUPERUSER_USERNAME --email $$DJANGO_SUPERUSER_EMAIL || true &&
              python manage.py runserver 0.0.0.0:8000"
+
+  auth_service:
+    build:
+      context: ./services/auth_service
+      dockerfile: Dockerfile 
+    container_name: auth_service
+    ports:
+      - "8001:8000"
+    restart: unless-stopped
+
+  staff_service:
+    build:
+      context: ./services/staff_service
+      dockerfile: Dockerfile 
+    container_name: staff_service
+    ports:
+      - "8002:8000"
+    restart: unless-stopped
