@@ -1,32 +1,16 @@
-FROM python:3.13-slim-bookworm AS builder
+FROM python:3.13-slim-bookworm
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+WORKDIR /app
 
-WORKDIR /usr/src/app
+COPY requirements.txt /tmp/root_requirements.txt
+COPY services/staff_service/requirements.txt /tmp/service_requirements.txt
 
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/root_requirements.txt && \
+    pip install --no-cache-dir -r /tmp/service_requirements.txt
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY services/staff_service .
 
-COPY . .
+EXPOSE 8003
 
-FROM python:3.13-slim-bookworm AS final
-
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV PATH="/opt/venv/bin:$PATH"
-
-WORKDIR /usr/src/app
-
-COPY --from=builder /opt/venv /opt/venv
-COPY --from=builder /usr/src/app /usr/src/app
-
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-USER appuser
-
-EXPOSE 8000
-
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["uvicorn", "staff_app.asgi:application", "--host", "0.0.0.0", "--port", "8003"]

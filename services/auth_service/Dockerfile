@@ -2,12 +2,15 @@ FROM python:3.13-slim-bookworm
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt /tmp/root_requirements.txt
+COPY services/auth_service/requirements.txt /tmp/service_requirements.txt
 
-COPY . .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/root_requirements.txt && \
+    pip install --no-cache-dir -r /tmp/service_requirements.txt
+
+COPY services/auth_service .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "auth_app.asgi:application", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,0 +1,5 @@
+Django>=4.2,<5.0
+djangorestframework>=3.14,<3.16
+uvicorn[standard]
+requests>=2.20.0 
+django-filter==23.1 

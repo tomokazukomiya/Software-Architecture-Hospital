@@ -6,7 +6,6 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
 from .serializers import UserSerializer
 
-## Authentication API ##
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return

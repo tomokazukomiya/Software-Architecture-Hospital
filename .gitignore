@@ -12,15 +12,11 @@ db.sqlite3
 
 images
 
- 
 
 # Backup files #
 
 *.bak
 
- 
-
-# If you are using PyCharm #
 
 # User-specific stuff
 
@@ -312,3 +308,26 @@ staticFiles
 # Database
 
 db.sqlite3
+
+
+# Node modules (librerie installate con npm/yarn)
+node_modules/
+build/
+
+
+# Log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage
+coverage/
+
+# Sistemi CI/CD
+*.tgz
+*.lock-wscript
+.pnp/
+.pnp.js
+
+# TypeScript
+*.tsbuildinfo

@@ -5,15 +5,9 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-
 from .serializers import UserSerializer, RegisterSerializer
 
-
 class LoginView(ObtainAuthToken):
-    """
-    API view for user login, returns auth token.
-    """
-
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data,
                                            context={'request': request})
@@ -25,19 +19,21 @@ class LoginView(ObtainAuthToken):
             'user': UserSerializer(user, context=self.get_serializer_context()).data
         })
 
-class RegisterViewSet(viewsets.GenericViewSet, viewsets.mixins.CreateModelMixin):
-    """
-    API view for user registration.
-    """
-    queryset = User.objects.all()
-    serializer_class = RegisterSerializer
-    permission_classes = [permissions.AllowAny] 
+class RegisterViewSet(viewsets.GenericViewSet): 
+    serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save() 
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user': UserSerializer(user, context=self.get_serializer_context()).data 
+        }, status=status.HTTP_201_CREATED)
 
 class TokenIntrospectionView(APIView):
-    """
-    An internal API endpoint for other services to validate a token.
-    Expects a POST request with {"token": "your_token_string"}
-    """
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
