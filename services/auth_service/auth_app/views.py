@@ -19,18 +19,18 @@ class LoginView(ObtainAuthToken):
             'user': UserSerializer(user, context=self.get_serializer_context()).data
         })
 
-class RegisterViewSet(viewsets.GenericViewSet): 
+class RegisterViewSet(viewsets.GenericViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save() 
+        user = serializer.save()
         token, _ = Token.objects.get_or_create(user=user)
         return Response({
             'token': token.key,
-            'user': UserSerializer(user, context=self.get_serializer_context()).data 
+            'user': UserSerializer(user, context=self.get_serializer_context()).data
         }, status=status.HTTP_201_CREATED)
 
 class TokenIntrospectionView(APIView):
@@ -48,5 +48,22 @@ class TokenIntrospectionView(APIView):
 
         if not token.user.is_active:
             return Response({"error": "User inactive or deleted", "active": False}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        user_data = UserSerializer(token.user).data
+        response_data = {
+            "active": True,
+            "user": user_data 
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
-        return Response(UserSerializer(token.user).data, status=status.HTTP_200_OK)
+class UserDetailView(generics.RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated] 

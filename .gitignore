@@ -292,11 +292,9 @@ staticFiles
 
  
 
-# Migrations
-
-**/**/migrations
-
-**/**/migrations/*
+# Django Migrations (allow .py and __init__.py, ignore cache)
+**/migrations/__pycache__/
+**/migrations/*.pyc
 
  
 

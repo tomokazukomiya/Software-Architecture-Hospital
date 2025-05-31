@@ -11,13 +11,9 @@ logger = logging.getLogger(__name__)
 STAFF_SERVICE_BASE_URL = os.getenv("STAFF_SERVICE_URL", "http://staff_service:8000/api/")
 PATIENT_SERVICE_BASE_URL = os.getenv("PATIENT_SERVICE_URL", "http://patient_service:8000/api/")
 AUTH_SERVICE_BASE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth_service:8000/api/")
-INTERNAL_SERVICE_TOKEN = os.getenv("INTERNAL_SERVICE_TOKEN")
 
 def _get_auth_header():
-    if not INTERNAL_SERVICE_TOKEN:
-        logger.warning("INTERNAL_SERVICE_TOKEN is not configured. Calls between services might fail or not be authenticated.")
-        return {}
-    return {"Authorization": f"Bearer {INTERNAL_SERVICE_TOKEN}"}
+    return {}
 
 def _make_authenticated_request(url, entity_type, entity_id, field_name_for_error="entity"):
     auth_header = _get_auth_header()
@@ -44,9 +40,6 @@ def _validate_external_entity(url, entity_type, entity_id, field_name):
     auth_header = _get_auth_header()
     if entity_id is None:
         return entity_id
-        
-    if not auth_header and entity_id:
-        logger.error(f"Cannot validate {entity_type} {entity_id}: INTERNAL_SERVICE_TOKEN is not configured.")
     
     full_url = f"{url.rstrip('/')}/{entity_type.strip('/')}/{entity_id}/"
 

@@ -1,0 +1,4 @@
+CREATE DATABASE patient_db;
+CREATE DATABASE visit_db;
+CREATE DATABASE staff_db;
+CREATE DATABASE inventory_db;

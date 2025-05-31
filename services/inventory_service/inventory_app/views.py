@@ -9,7 +9,7 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
     queryset = InventoryItem.objects.all()
     serializer_class = InventoryItemSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ['get', 'post', 'delete']
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
     filterset_fields = ['category', 'quantity']
 
     @action(detail=False, methods=['get'])

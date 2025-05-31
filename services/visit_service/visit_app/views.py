@@ -33,7 +33,7 @@ class EmergencyVisitViewSet(viewsets.ModelViewSet):
     search_fields = ['chief_complaint', 'initial_observation']
     ordering_fields = ['arrival_time', 'triage_level']
     ordering = ['-arrival_time']
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
     @action(detail=True, methods=['patch'])
     def discharge(self, request, pk=None):
@@ -91,7 +91,7 @@ class VitalSignViewSet(viewsets.ModelViewSet):
     filterset_fields = ['visit_id'] 
     ordering_fields = ['recorded_at']
     ordering = ['-recorded_at']
-    http_method_names = ['get', 'post', 'delete']
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         queryset = VitalSign.objects.all()
@@ -108,7 +108,7 @@ class TreatmentViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
     ordering_fields = ['administered_at']
     ordering = ['-administered_at']
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         return Treatment.objects.all()
@@ -122,7 +122,7 @@ class DiagnosisViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ['visit_id', 'is_primary'] 
     search_fields = ['code', 'description']
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         return Diagnosis.objects.all()
@@ -138,7 +138,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
     search_fields = ['medication']
     ordering_fields = ['prescribed_at']
     ordering = ['-prescribed_at']
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         return Prescription.objects.all()
@@ -174,7 +174,7 @@ class BedViewSet(viewsets.ModelViewSet):
     search_fields = ['bed_number', 'special_equipment']
     ordering_fields = ['bed_number', 'last_cleaned']
     ordering = ['bed_number']
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
     @action(detail=False, methods=['get'])
     def available(self, request):
@@ -225,7 +225,7 @@ class AdmissionViewSet(viewsets.ModelViewSet):
     }
     ordering_fields = ['admission_time', 'discharge_time']
     ordering = ['-admission_time']
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
     @action(detail=True, methods=['patch'])
     def discharge(self, request, pk=None):

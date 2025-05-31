@@ -32,8 +32,11 @@ A comprehensive Django-based management system for hospital emergency department
 1. Clone the repository:
    git clone https://github.com/tomokazukomiya/Software-Architecture-Hospital.git
 
-2. Run:
+2. Enter in the right directory:
+   cd Hospital
+
+3. Run:
    docker-compose up --build
       
-3. Connect:
+4. Connect:
   http://localhost:3000

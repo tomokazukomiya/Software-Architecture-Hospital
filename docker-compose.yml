@@ -1,4 +1,23 @@
 services:
+  db:
+    image: postgres:15-alpine 
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_db:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=auth_db 
+      - POSTGRES_USER=auth_user
+      - POSTGRES_PASSWORD=SoftwareArchitectures2025 
+    ports:
+      - "5432:5432" 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
   patient_service:
     build:
       context: .
@@ -7,13 +26,24 @@ services:
       - "8002:8002"
     environment:
       - PYTHONPATH=/app
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=patient_db 
+      - DB_USER=auth_user
+      - DB_PASSWORD=SoftwareArchitectures2025 
+      - DB_HOST=db
+      - AUTH_INTROSPECT_URL=http://auth-service:8000/api/auth/introspect/
+      - DB_PORT=5432
+      
     command: >
       sh -c "python manage.py migrate &&
              python -m uvicorn patient_app.asgi:application --host 0.0.0.0 --port 8002"
     networks:
       - backend
     depends_on:
-      - auth_service
+      db:
+        condition: service_healthy
+      auth-service: 
+        condition: service_started
 
   visit_service:
     build:
@@ -23,13 +53,25 @@ services:
       - "8004:8004"
     environment:
       - PYTHONPATH=/app
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=visit_db 
+      - DB_USER=auth_user
+      - DB_PASSWORD=SoftwareArchitectures2025
+      - DB_HOST=db
+      - AUTH_INTROSPECT_URL=http://auth-service:8000/api/auth/introspect/
+      - DB_PORT=5432
+      - PATIENT_SERVICE_URL=http://patient_service:8002/api/
+      - STAFF_SERVICE_URL=http://staff_service:8003/api/
     command: >
       sh -c "python manage.py migrate &&
              python -m uvicorn visit_app.asgi:application --host 0.0.0.0 --port 8004"
     networks:
       - backend
     depends_on:
-      - auth_service
+      db:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
 
   staff_service:
     build:
@@ -39,13 +81,23 @@ services:
       - "8003:8003"
     environment:
       - PYTHONPATH=/app
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=staff_db 
+      - DB_USER=auth_user
+      - DB_PASSWORD=SoftwareArchitectures2025
+      - DB_HOST=db
+      - AUTH_INTROSPECT_URL=http://auth-service:8000/api/auth/introspect/
+      - DB_PORT=5432
     command: >
       sh -c "python manage.py migrate &&
              python -m uvicorn staff_app.asgi:application --host 0.0.0.0 --port 8003"
     networks:
       - backend
     depends_on:
-      - auth_service
+      db:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
 
   inventory_service:
     build:
@@ -55,15 +107,25 @@ services:
       - "8001:8001"
     environment:
       - PYTHONPATH=/app
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=inventory_db 
+      - DB_USER=auth_user
+      - DB_PASSWORD=SoftwareArchitectures2025
+      - DB_HOST=db
+      - AUTH_INTROSPECT_URL=http://auth-service:8000/api/auth/introspect/
+      - DB_PORT=5432
     command: >
       sh -c "python manage.py migrate &&
              python -m uvicorn inventory_app.asgi:application --host 0.0.0.0 --port 8001"
     networks:
       - backend
     depends_on:
-      - auth_service
+      db:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
 
-  auth_service:
+  auth-service:
     build:
       context: .
       dockerfile: services/auth_service/Dockerfile
@@ -71,11 +133,20 @@ services:
       - "8000:8000"
     environment:
       - PYTHONPATH=/app
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=auth_db
+      - DB_USER=auth_user
+      - DB_PASSWORD=SoftwareArchitectures2025 
+      - DB_HOST=db
+      - DB_PORT=5432
     command: >
       sh -c "python manage.py migrate &&
              python -m uvicorn auth_app.asgi:application --host 0.0.0.0 --port 8000"
     networks:
       - backend
+    depends_on:
+      db: 
+        condition: service_healthy 
 
   frontend:
     build:
@@ -83,7 +154,7 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - auth_service
+      - auth-service
       - inventory_service
       - staff_service
       - patient_service
@@ -92,3 +163,6 @@ services:
 networks:
   backend:
     driver: bridge
+
+volumes: 
+  postgres_data:
