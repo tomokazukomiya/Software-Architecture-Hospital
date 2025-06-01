@@ -5,7 +5,8 @@ import {
   Routes, 
   Route, 
   Navigate,
-  NavLink,
+  NavLink, 
+  useNavigate,
   useLocation
 } from 'react-router-dom';
 import {
@@ -263,7 +264,7 @@ const ProtectedRoute = ({ children }) => {
 
 const Login = () => {
   const { login } = useAuth();
-  const navigate = React.useContext(Router).navigate; // Using context for navigate, ensure Router context is available
+  const navigate = useNavigate(); 
   const [credentials, setCredentials] = useState({
     email: '',
     password: ''
@@ -361,7 +362,7 @@ const Login = () => {
 
 const Register = () => {
   const { register } = useAuth();
-  const navigate = React.useContext(Router).navigate; // Using context for navigate
+  const navigate = useNavigate(); 
   const [userData, setUserData] = useState({
     name: '',
     email: '',
