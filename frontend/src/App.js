@@ -508,7 +508,7 @@ const Navbar = () => {
     { text: 'Beds', icon: <BedIcon />, path: '/beds' },
     { text: 'Diagnoses', icon: <BiotechIcon />, path: '/diagnoses' },
     { text: 'Treatments', icon: <HealingIcon />, path: '/treatments' },
-    { text: 'Vital Signs', icon: <MonitorHeartIcon />, path: '/vitalsigns' },
+    { text: 'Vitals', icon: <MonitorHeartIcon />, path: '/vitalsigns' },
     { text: 'Prescriptions', icon: <MedicationIcon />, path: '/prescriptions' },
   ];
 
@@ -678,7 +678,7 @@ const Dashboard = () => {
     fetchStats();
   }, [location.pathname]);
 
-  const statCards = [
+ const statCards = [
     {
       title: 'Patients',
       value: stats.patients,
@@ -702,7 +702,7 @@ const Dashboard = () => {
       value: stats.records,
       icon: <RecordsIcon fontSize="large" />,
       color: 'success'
-    }
+    },
   ];
   return (
     <>
@@ -712,7 +712,7 @@ const Dashboard = () => {
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statCards.map((card, index) => (
-          <Grid item xs={12} sm={6} lg={3} key={index}> {/* Changed md={3} to lg={3} for better medium screen distribution, sm={6} handles smaller */}
+          <Grid item xs={12} sm={6} md={3} key={index}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -735,10 +735,10 @@ const Dashboard = () => {
       </Grid>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} lg={6}> {/* Changed md={6} to lg={6} */}
-          <Card sx={{ height: '100%' }}>
+        <Grid item xs={12} md={12} >
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, textAlign: 'center' }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Recent Patients
               </Typography>
               {recentPatients.length > 0 ? (
@@ -761,18 +761,6 @@ const Dashboard = () => {
               ) : (
                 <Typography color="textSecondary" sx={{ mt: 2, textAlign: 'center' }}>No recent patient activity.</Typography>
               )}
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} lg={6}>
-          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600}}>
-                Upcoming Appointments
-              </Typography>
-              <Typography color="textSecondary" sx={{ mt: 2 }}>
-                Appointments will appear here
-              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -1400,13 +1388,21 @@ const Staff = () => {
           showSnackbar('Please select a user.', 'error');
           return;
         }
+        if (!currentStaff.role) {
+          showSnackbar('Role is required.', 'error');
+          return;
+        }
         if (!currentStaff.department) {
           showSnackbar('Department is required.', 'error');
           return;
         }
+        if (!currentStaff.hire_date) {
+          showSnackbar('Hire date is required.', 'error');
+          return;
+        }
 
         payload = {
-          user_id: userId, 
+          user_id: userId, // Deve essere user_id per corrispondere al serializer
           role: currentStaff.role,
           department: currentStaff.department,
           license_number: currentStaff.license_number,
@@ -2620,6 +2616,30 @@ const Visits = () => {
 
   const handleSubmit = async () => {
     try {
+      // Frontend validation
+      if (!currentVisit.patient_id) {
+        showSnackbar('Patient is required.', 'error');
+        return;
+      }
+      if (!currentVisit.chief_complaint) {
+        showSnackbar('Chief complaint is required.', 'error');
+        return;
+      }
+      if (!currentVisit.triage_level) {
+        showSnackbar('Triage level is required.', 'error');
+        return;
+      }
+
+      if (currentVisit.is_admitted && currentVisit.admissionDetails) {
+        if (!currentVisit.admissionDetails.bed_id) {
+            showSnackbar('Bed assignment is required for admitted patients.', 'error');
+            return;
+        }
+        if (!currentVisit.admissionDetails.admitting_diagnosis) {
+            showSnackbar('Admitting diagnosis is required for admitted patients.', 'error');
+            return;
+        }
+      }
       const payload = {
         ...currentVisit,
         patient_id: currentVisit.patient_id ? parseInt(currentVisit.patient_id) : null,

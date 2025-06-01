@@ -25,12 +25,9 @@ SECRET_KEY = 'django-insecure-=%r#5%&o74efbc071%d7@x&p%p58y6$3m))uylm577gd3=5i(a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    'patient_service',
-]
-
+ALLOWED_HOSTS = ['*']
+USE_X_FORWARDED_HOST = True
+print(">>> ALLOWED_HOSTS =", ALLOWED_HOSTS)
 
 # Application definition
 
@@ -48,6 +45,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'patient_app.middleware.FixInvalidHostMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -151,6 +149,7 @@ DEFAULT_AUTHENTICATION_CLASSES = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://frontend:3000",
     "http://127.0.0.1:3000",
 ]
 

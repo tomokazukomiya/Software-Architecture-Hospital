@@ -113,6 +113,7 @@ services:
       - DB_PASSWORD=SoftwareArchitectures2025
       - DB_HOST=db
       - AUTH_INTROSPECT_URL=http://auth-service:8000/api/auth/introspect/
+      - AUTH_SERVICE_URL=http://auth-service:8000/api/auth/ 
       - DB_PORT=5432
     command: >
       sh -c "python manage.py migrate &&
