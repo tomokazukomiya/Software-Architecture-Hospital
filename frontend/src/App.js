@@ -1705,7 +1705,7 @@ const Staff = () => {
                 </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <FormControl fullWidth margin="normal" required> {/* Department is now required */}
+                <FormControl fullWidth margin="normal" required> 
                   <InputLabel>Department</InputLabel>
                   <Select
                     name="department"
