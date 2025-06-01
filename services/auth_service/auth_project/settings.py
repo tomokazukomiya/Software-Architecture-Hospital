@@ -80,8 +80,6 @@ WSGI_APPLICATION = 'auth_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-import os
-
 DB_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3')
 DB_NAME = os.environ.get('DB_NAME', BASE_DIR / 'db.sqlite3' if DB_ENGINE == 'django.db.backends.sqlite3' else 'auth_db') 
 DB_USER = os.environ.get('DB_USER')

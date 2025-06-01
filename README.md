@@ -60,15 +60,6 @@ Each service will start respectively in the following ports:
 4. **Testing**
 
 You can test the application by running the following cURL in the terminal. These command line tools are used to transfer data with URLs, primarily for making HTTP requests to APIs in order to retrieve significant information. You can find the complete list of cURLs in the cURL file.
-## ❗ Attention
-> The project might not be able to properly execute if one of the port in which it runs it already in use. In order to see what processes are running in the port, execute the command:
-```
-sudo lsof -i:YourPort
-```
-> If the port is already occupied, copy the PID of the process(es) that is running and execute the command:
-```
-sudo kill -9 PIDofTheProcess
-```
 
 ## ⚙️ Guided project installation with images
 In order to properly understand the project installation, here it is a guided installation which provides images descriptions

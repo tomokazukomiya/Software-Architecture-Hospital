@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { 
   BrowserRouter as Router, 
   Routes, 
   Route, 
   Navigate,
-  useNavigate,
   NavLink,
   useLocation
 } from 'react-router-dom';
@@ -41,7 +40,6 @@ import {
   Card,
   CardContent,
   Avatar,
-  IconButton,
   Badge,
   Divider,
   List,
@@ -59,15 +57,13 @@ import {
   Checkbox
 } from '@mui/material';
 import {
-  People as PeopleIcon,
-  MedicalServices as MedicalServicesIcon,
+  People as PeopleIcon,  
   Inventory as InventoryIcon,
   ExitToApp as ExitToAppIcon,
   Add as AddIcon,
   Search as SearchIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Person as PersonIcon,
   Lock as LockIcon,
   Dashboard as DashboardIcon,
   Assignment as RecordsIcon,
@@ -75,15 +71,17 @@ import {
   Menu as MenuIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
-  FilterList as FilterIcon, 
   Clear as ClearIcon, 
   Hotel as BedIcon,
   Healing as HealingIcon,
   MonitorHeart as MonitorHeartIcon,
   Medication as MedicationIcon,
   Biotech as BiotechIcon,
-  ExpandMore as ExpandMoreIcon
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
+import FilterListIcon from '@mui/icons-material/FilterList'; // Explicit import
+import PersonIcon from '@mui/icons-material/Person'; // Explicit import
+import IconButton from '@mui/material/IconButton'; // Explicit import
 
 const API_AUTH_BASE_URL = 'http://localhost:8000/api/auth/';
 const API_PATIENTS_BASE_URL = 'http://localhost:8002/api/patients/';
@@ -265,7 +263,7 @@ const ProtectedRoute = ({ children }) => {
 
 const Login = () => {
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const navigate = React.useContext(Router).navigate; // Using context for navigate, ensure Router context is available
   const [credentials, setCredentials] = useState({
     email: '',
     password: ''
@@ -363,7 +361,7 @@ const Login = () => {
 
 const Register = () => {
   const { register } = useAuth();
-  const navigate = useNavigate();
+  const navigate = React.useContext(Router).navigate; // Using context for navigate
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -495,7 +493,6 @@ const Register = () => {
 
 const Navbar = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width:900px)');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -651,12 +648,11 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [patientsRes, staffRes, inventoryRes, recordsRes] = await Promise.all([
+        const [patientsRes, staffRes, inventoryRes] = await Promise.all([
           apiClient.get(API_PATIENTS_BASE_URL + 'count/'),
           apiClient.get(API_STAFF_BASE_URL + 'count/'),
           apiClient.get(API_INVENTORY_BASE_URL + 'count/')
         ]);
-        const allPatientsData = await apiClient.get(API_PATIENTS_BASE_URL);
         const visitsStatsRes = await apiClient.get(API_VISITS_BASE_URL + 'stats/');
         setStats({
           patients: patientsRes.data.count,
@@ -665,6 +661,7 @@ const Dashboard = () => {
           records: visitsStatsRes.data.total
         });
 
+        const allPatientsData = await apiClient.get(API_PATIENTS_BASE_URL);
         const sortedPatients = [...allPatientsData.data]
           .sort((a, b) => parseInt(b.id) - parseInt(a.id))
           .slice(0, 5);
@@ -769,6 +766,17 @@ const Dashboard = () => {
   );
 };
 
+const calculateAgeUtil = (dateString) => {
+  if (!dateString) return null;
+  const birthDate = new Date(dateString);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
 const Patients = () => {
   const [patients, setPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
@@ -783,40 +791,31 @@ const Patients = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    fetchPatients();
-  }, []);
+  const showSnackbar = useCallback((message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  }, []); // No direct dependencies for setSnackbar setter
 
-  useEffect(() => {
-    filterPatients();
-  }, [patients, searchTerm, filters]);
-
-  const calculateAge = (dateString) => {
-    const birthDate = new Date(dateString);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       const res = await apiClient.get(API_PATIENTS_BASE_URL);
       setPatients(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch patients', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const filterPatients = () => {
+  useEffect(() => {
+    fetchPatients();
+  }, [fetchPatients]);
+
+  const calculateAge = useCallback(calculateAgeUtil, []);
+
+  const filterPatients = useCallback(() => {
     let result = patients;
 
     if (searchTerm) {
       result = result.filter(patient =>
-        (patient.first_name + ' ' + patient.last_name).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ((patient.first_name || '') + ' ' + (patient.last_name || '')).toLowerCase().includes(searchTerm.toLowerCase()) ||
         patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         patient.phone_number?.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -842,7 +841,11 @@ const Patients = () => {
     }
 
     setFilteredPatients(result);
-  };
+  }, [patients, searchTerm, filters, calculateAge]);
+
+  useEffect(() => {
+    filterPatients();
+  }, [filterPatients]);
 
   const handleOpenDialog = (patient = null) => {
     setCurrentPatient(patient || {
@@ -907,10 +910,6 @@ const Patients = () => {
     }
   };
 
-  const showSnackbar = (message, severity = 'success') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
   };
@@ -946,7 +945,7 @@ const Patients = () => {
               sx={{ mr: 2 }}
             />
             <Button
-              startIcon={showFilters ? <ChevronRightIcon /> : <FilterIcon />}
+              startIcon={showFilters ? <ChevronRightIcon /> : <FilterListIcon />}
               onClick={() => setShowFilters(!showFilters)}
               sx={{ whiteSpace: 'nowrap' }}
             >
@@ -1276,6 +1275,16 @@ const Patients = () => {
   );
 };
 
+const getStaffRoleColor = (role) => {
+  switch(role) {
+    case 'TEC': return 'primary';
+    case 'ADM': return 'secondary';
+    case 'RES': return 'info';
+    case 'INT': return 'warning';
+    default: return 'default';
+  }
+};
+
 const Staff = () => {
   const [staff, setStaff] = useState([]);
   const [filteredStaff, setFilteredStaff] = useState([]);
@@ -1290,37 +1299,31 @@ const Staff = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [users, setUsers] = useState([]);
 
-  useEffect(() => {
-    fetchStaff();
+  const showSnackbar = useCallback((message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
   }, []);
 
-  useEffect(() => {
-    filterStaff();
-  }, [staff, searchTerm, filters]);
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await apiClient.get(`${API_AUTH_BASE_URL}users/`);
-        setUsers(res.data);
-      } catch (error) {
-        console.error("Failed to fetch users", error);
-        showSnackbar('Failed to fetch users for selection', 'error');
-      }
-    };
-    fetchUsers();
-  }, []);
-
-  const fetchStaff = async () => {
+  const fetchStaff = useCallback(async () => {
     try {
       const res = await apiClient.get(API_STAFF_BASE_URL);
       setStaff(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch staff', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const filterStaff = () => {
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await apiClient.get(`${API_AUTH_BASE_URL}users/`);
+      setUsers(res.data);
+    } catch (error) {
+      console.error("Failed to fetch users", error);
+    }
+  }, [showSnackbar]);
+
+
+
+  const filterStaff = useCallback(() => {
     let result = staff;
 
     if (searchTerm) {
@@ -1341,7 +1344,19 @@ const Staff = () => {
     }
 
     setFilteredStaff(result);
-  };
+  }, [staff, searchTerm, filters]);
+
+  useEffect(() => {
+    fetchStaff();
+  }, [fetchStaff]);
+
+  useEffect(() => {
+    filterStaff();
+  }, [filterStaff]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleOpenDialog = (staffMember = null) => {
     if (staffMember) {
@@ -1381,7 +1396,6 @@ const Staff = () => {
         delete payload.password;
 
         await apiClient.put(`${API_STAFF_BASE_URL}${currentStaff.id}/`, payload);
-        showSnackbar('Staff updated successfully');
       } else {
         const userId = parseInt(currentStaff.user);
         if (isNaN(userId) || !userId) {
@@ -1402,7 +1416,7 @@ const Staff = () => {
         }
 
         payload = {
-          user_id: userId, // Deve essere user_id per corrispondere al serializer
+          user_id: userId, 
           role: currentStaff.role,
           department: currentStaff.department,
           license_number: currentStaff.license_number,
@@ -1411,7 +1425,6 @@ const Staff = () => {
           is_active: currentStaff.is_active === undefined ? true : currentStaff.is_active,
           shift_schedule: currentStaff.shift_schedule,
         };
-        console.log("Staff creation payload:", payload);
         await apiClient.post(API_STAFF_BASE_URL, payload);
         showSnackbar('Staff added successfully');
       }
@@ -1443,23 +1456,10 @@ const Staff = () => {
     }
   };
 
-  const showSnackbar = (message, severity = 'success') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
   };
 
-  const getRoleColor = (role) => {
-    switch(role) {
-      case 'TEC': return 'primary';
-      case 'ADM': return 'secondary';
-      case 'RES': return 'info';
-      case 'INT': return 'warning';
-      default: return 'default';
-    }
-  };
   return (
     <>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -1491,7 +1491,7 @@ const Staff = () => {
               sx={{ mr: 2 }}
             />
             <Button
-              startIcon={showFilters ? <ChevronRightIcon /> : <FilterIcon />}
+              startIcon={showFilters ? <ChevronRightIcon /> : <FilterListIcon />}
               onClick={() => setShowFilters(!showFilters)}
               sx={{ whiteSpace: 'nowrap' }}
             >
@@ -1570,7 +1570,7 @@ const Staff = () => {
                 <TableRow key={staff.id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Avatar sx={{ width: 36, height: 36, mr: 2, bgcolor: getRoleColor(staff.role) + '.main' }}>
+                      <Avatar sx={{ width: 36, height: 36, mr: 2, bgcolor: getStaffRoleColor(staff.role) + '.main' }}>
                         {staff.user?.first_name?.charAt(0) || staff.user?.username?.charAt(0) || 'S'}
                       </Avatar>
                       {staff.user?.first_name && staff.user?.last_name ? `${staff.user.first_name} ${staff.user.last_name}` : staff.user?.username}
@@ -1580,7 +1580,7 @@ const Staff = () => {
                     <Chip
                       label={staff.role}
                       size="small"
-                      color={getRoleColor(staff.role)}
+                      color={getStaffRoleColor(staff.role)}
                     />
                   </TableCell>
                   <TableCell>
@@ -1798,6 +1798,12 @@ const Staff = () => {
   );
 };
 
+const getInventoryQuantityColor = (quantity) => {
+  if (quantity < 10) return 'error';
+  if (quantity < 20) return 'warning';
+  return 'success';
+};
+
 const Inventory = () => {
   const [inventory, setInventory] = useState([]);
   const [filteredInventory, setFilteredInventory] = useState([]);
@@ -1812,24 +1818,20 @@ const Inventory = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    fetchInventory();
+  const showSnackbar = useCallback((message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
   }, []);
 
-  useEffect(() => {
-    filterInventory();
-  }, [inventory, searchTerm, filters]);
-
-  const fetchInventory = async () => {
+  const fetchInventory = useCallback(async () => {
     try {
       const res = await apiClient.get(API_INVENTORY_BASE_URL);
       setInventory(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch inventory', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const filterInventory = () => {
+  const filterInventory = useCallback(() => {
     let result = inventory;
 
     if (searchTerm) {
@@ -1853,7 +1855,15 @@ const Inventory = () => {
     }
 
     setFilteredInventory(result);
-  };
+  }, [inventory, searchTerm, filters]);
+
+  useEffect(() => {
+    fetchInventory();
+  }, [fetchInventory]);
+
+  useEffect(() => {
+    filterInventory();
+  }, [filterInventory]);
 
   const handleOpenDialog = (item = null) => {
     setCurrentItem(item || {
@@ -1911,18 +1921,8 @@ const Inventory = () => {
     }
   };
 
-  const showSnackbar = (message, severity = 'success') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
-  };
-
-  const getQuantityColor = (quantity) => {
-    if (quantity < 10) return 'error';
-    if (quantity < 20) return 'warning';
-    return 'success';
   };
 
   return (
@@ -1956,7 +1956,7 @@ const Inventory = () => {
               sx={{ mr: 2 }}
             />
             <Button
-              startIcon={showFilters ? <ChevronRightIcon /> : <FilterIcon />}
+              startIcon={showFilters ? <ChevronRightIcon /> : <FilterListIcon />}
               onClick={() => setShowFilters(!showFilters)}
               sx={{ whiteSpace: 'nowrap' }}
             >
@@ -2049,7 +2049,7 @@ const Inventory = () => {
                     <Chip
                       label={`${item.quantity} ${item.unit}`}
                       size="small"
-                      color={getQuantityColor(item.quantity)}
+                      color={getInventoryQuantityColor(item.quantity)}
                     />
                   </TableCell>
                   <TableCell>
@@ -2235,25 +2235,20 @@ const Beds = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    fetchBeds();
-  }, []);
+  const showSnackbar = useCallback((message, severity = 'success') => setSnackbar({ open: true, message, severity }), []);
 
-  useEffect(() => {
-    filterBeds();
-  }, [beds, searchTerm, filters]);
-
-  const fetchBeds = async () => {
+  const fetchBeds = useCallback(async () => {
     try {
       const res = await apiClient.get(API_BEDS_BASE_URL);
       setBeds(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch beds', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const filterBeds = () => {
+  const filterBeds = useCallback(() => {
     let result = beds;
+
     if (searchTerm) {
       result = result.filter(bed =>
         bed.bed_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -2267,7 +2262,15 @@ const Beds = () => {
       result = result.filter(bed => bed.location?.toLowerCase().includes(filters.location.toLowerCase()));
     }
     setFilteredBeds(result);
-  };
+  }, [beds, searchTerm, filters]);
+
+  useEffect(() => {
+    fetchBeds();
+  }, [fetchBeds]);
+
+  useEffect(() => {
+    filterBeds();
+  }, [filterBeds]);
 
   const handleOpenDialog = (bed = null) => {
     setCurrentBed(bed || {
@@ -2313,8 +2316,7 @@ const Beds = () => {
     }
   };
 
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
-  const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
+  const handleCloseSnackbar = useCallback(() => setSnackbar(prev => ({ ...prev, open: false })), []);
 
   const bedStatusChoices = [
     { value: 'AVAIL', label: 'Available' },
@@ -2337,7 +2339,7 @@ const Beds = () => {
               InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
               value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={{ mr: 2 }}
             />
-            <Button startIcon={showFilters ? <ChevronRightIcon /> : <FilterIcon />} onClick={() => setShowFilters(!showFilters)}>
+            <Button startIcon={showFilters ? <ChevronRightIcon /> : <FilterListIcon />} onClick={() => setShowFilters(!showFilters)}>
               {showFilters ? 'Hide' : 'Filters'}
             </Button>
           </Box>
@@ -2447,59 +2449,58 @@ const Visits = () => {
   const [openPrescriptionDialog, setOpenPrescriptionDialog] = useState(false);
   const [currentPrescription, setCurrentPrescription] = useState(null);
 
-
-  useEffect(() => {
-    fetchVisits();
-    fetchPatients();
-    fetchStaff();
+  const showSnackbar = useCallback((message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
   }, []);
 
-  useEffect(() => {
-    filterVisits();
-  }, [visits, searchTerm, filters]);
-
-  useEffect(() => {
-    if (openDialog) {
-      if (currentVisit?.id) {
-        fetchSubModelsForVisit(currentVisit.id);
-        if (currentVisit.is_admitted) {
-          fetchAdmissionDetails(currentVisit.id);
-        }
-      }
-      if (currentVisit?.is_admitted || (!currentVisit?.id && currentVisit?.is_admitted === undefined)) {
-        fetchAvailableBeds();
-      }
-    }
-  }, [openDialog, currentVisit?.id, currentVisit?.is_admitted]);
-
-  const fetchVisits = async () => {
+  const fetchVisits = useCallback(async () => {
     try {
       const res = await apiClient.get(API_VISITS_BASE_URL);
       setVisits(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch visits', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       const res = await apiClient.get(API_PATIENTS_BASE_URL);
       setPatients(res.data);
     } catch (error) {
       console.error('Error fetching patients:', error);
     }
-  };
+  }, []);
 
-  const fetchStaff = async () => {
+  const fetchStaff = useCallback(async () => {
     try {
       const res = await apiClient.get(API_STAFF_BASE_URL);
-      setStaff(res.data);
     } catch (error) {
       console.error('Error fetching staff:', error);
+      // Optionally show snackbar here too if critical
     }
-  };
+  }, []);
 
-  const fetchAvailableBeds = async () => {
+  useEffect(() => {
+    fetchVisits();
+    fetchPatients();
+    fetchStaff();
+  }, [fetchVisits, fetchPatients, fetchStaff]);
+
+
+  const filterVisits = useCallback(() => {
+    let result = visits;
+    if (searchTerm) {
+      result = result.filter(visit =>
+        (visit.patient_id?.toString() || '').includes(searchTerm) ||
+        (visit.chief_complaint || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (visit.attending_physician_id?.toString() || '').includes(searchTerm)
+      );
+    }
+    setFilteredVisits(result);
+  }, [visits, searchTerm, filters]);
+
+
+  const fetchAvailableBeds = useCallback(async () => {
     try {
       const res = await apiClient.get(`${API_BEDS_BASE_URL}?status=AVAIL`);
       setAvailableBeds(res.data);
@@ -2507,9 +2508,9 @@ const Visits = () => {
       console.error('Error fetching available beds:', error);
       showSnackbar('Failed to fetch available beds', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const fetchAdmissionDetails = async (visitId) => {
+  const fetchAdmissionDetails = useCallback(async (visitId) => {
     try {
       const res = await apiClient.get(`${API_ADMISSIONS_BASE_URL}?visit_id=${visitId}`);
       if (res.data && res.data.length > 0) {
@@ -2521,9 +2522,9 @@ const Visits = () => {
       console.error('Error fetching admission details:', error);
       setCurrentVisit(prev => ({ ...prev, admissionDetails: null }));
     }
-  };
+  }, []);
 
-  const fetchSubModelsForVisit = async (visitId) => {
+  const fetchSubModelsForVisit = useCallback(async (visitId) => {
     try {
       const [vitalsRes, treatmentsRes, diagnosesRes, prescriptionsRes] = await Promise.all([
         apiClient.get(`${API_VITALS_BASE_URL}?visit_id=${visitId}`),
@@ -2538,38 +2539,29 @@ const Visits = () => {
     } catch (error) {
       console.error('Error fetching sub-models:', error);
     }
-  };
+  }, []);
 
-  const filterVisits = () => {
-    let result = visits;
+  useEffect(() => {
+    filterVisits();
+  }, [filterVisits]); 
 
-    if (searchTerm) {
-      result = result.filter(visit =>
-        (visit.patient_id?.toString() || '').includes(searchTerm) ||
-        (visit.chief_complaint || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (visit.attending_physician_id?.toString() || '').includes(searchTerm)
-      );
+  useEffect(() => {
+    if (openDialog) {
+      if (currentVisit?.id) {
+        fetchSubModelsForVisit(currentVisit.id);
+        if (currentVisit.is_admitted) {
+          fetchAdmissionDetails(currentVisit.id);
+        }
+      }
+      const shouldFetchBeds = (!currentVisit?.id && (currentVisit?.is_admitted === true || currentVisit?.is_admitted === undefined)) ||
+                              (currentVisit?.id && currentVisit?.is_admitted === true);
+
+      if (shouldFetchBeds) {
+          fetchAvailableBeds();
+      }
     }
+  }, [openDialog, currentVisit, fetchSubModelsForVisit, fetchAdmissionDetails, fetchAvailableBeds]);
 
-    if (filters.status) {
-      const isAdmittedFilter = filters.status === "true";
-      result = result.filter(visit => visit.is_admitted === isAdmittedFilter);
-    }
-
-    if (filters.dateFrom) {
-      const fromDate = new Date(filters.dateFrom);
-      fromDate.setHours(0, 0, 0, 0);
-      result = result.filter(visit => new Date(visit.arrival_time) >= fromDate);
-    }
-
-    if (filters.dateTo) {
-      const toDate = new Date(filters.dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      result = result.filter(visit => new Date(visit.arrival_time) <= toDate);
-    }
-
-    setFilteredVisits(result);
-  };
 
   const handleOpenDialog = (visit = null) => {
     setCurrentVisit(visit || {
@@ -2616,7 +2608,6 @@ const Visits = () => {
 
   const handleSubmit = async () => {
     try {
-      // Frontend validation
       if (!currentVisit.patient_id) {
         showSnackbar('Patient is required.', 'error');
         return;
@@ -2920,13 +2911,9 @@ const Visits = () => {
     return `${staffMember.user.first_name || ''} ${staffMember.user.last_name || ''}`;
   };
 
-  const showSnackbar = (message, severity = 'success') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
-  const handleCloseSnackbar = () => {
+  const handleCloseSnackbar = useCallback(() => {
     setSnackbar(prev => ({ ...prev, open: false }));
-  };
+  }, []);
 
   return (
     <>
@@ -2959,7 +2946,7 @@ const Visits = () => {
               sx={{ mr: 2 }}
             />
             <Button
-              startIcon={showFilters ? <ChevronRightIcon /> : <FilterIcon />}
+              startIcon={showFilters ? <ChevronRightIcon /> : <FilterListIcon />}
               onClick={() => setShowFilters(!showFilters)}
               sx={{ whiteSpace: 'nowrap' }}
             >
@@ -3924,12 +3911,20 @@ const DiagnosesPage = () => {
   const [patients, setPatients] = useState([]);
   const [staff, setStaff] = useState([]); // For diagnosed_by_id
 
-  useEffect(() => {
-    fetchDiagnoses();
-    fetchVisits();
-    fetchPatients();
-    fetchStaff();
-  }, []);
+  const showSnackbar = useCallback((message, severity = 'success') => setSnackbar({ open: true, message, severity }), []);
+
+  const getVisitPatientName = useCallback((visitId) => {
+    const visit = visits.find(v => v.id === visitId);
+    if (!visit) return `Visit ID: ${visitId}`;
+    const patient = patients.find(p => p.id === visit.patient_id);
+    return patient ? `${patient.first_name} ${patient.last_name} (Visit #${visit.id})` : `Patient ID: ${visit.patient_id} (Visit #${visit.id})`;
+  }, [visits, patients]);
+
+  const getStaffName = useCallback((staffId) => {
+    const staffMember = staff.find(s => s.id === staffId);
+    if (!staffMember || !staffMember.user) return `Staff ID: ${staffId}`;
+    return `${staffMember.user.first_name || ''} ${staffMember.user.last_name || staffMember.user.username}`;
+  }, [staff]);
 
   useEffect(() => {
     let result = diagnoses;
@@ -3950,43 +3945,51 @@ const DiagnosesPage = () => {
       result = result.filter(diag => diag.is_primary === (filters.is_primary === 'true'));
     }
     setFilteredDiagnoses(result);
-  }, [diagnoses, searchTerm, filters, visits, patients]);
+  }, [diagnoses, searchTerm, filters, getVisitPatientName]); 
 
-  const fetchDiagnoses = async () => {
+  const fetchDiagnoses = useCallback(async () => {
     try {
       const res = await apiClient.get(API_DIAGNOSES_BASE_URL);
       setDiagnoses(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch diagnoses', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const fetchVisits = async () => {
+  const fetchVisits = useCallback(async () => {
     try {
       const res = await apiClient.get(API_VISITS_BASE_URL);
       setVisits(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch visits', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       const res = await apiClient.get(API_PATIENTS_BASE_URL);
       setPatients(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch patients', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const fetchStaff = async () => {
+  const fetchStaff = useCallback(async () => {
     try {
       const res = await apiClient.get(API_STAFF_BASE_URL);
       setStaff(res.data.filter(s => ['RES', 'TEC', 'ADM'].includes(s.role))); 
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch staff (physicians)', 'error');
     }
-  };
+  }, [showSnackbar]);
+
+  useEffect(() => {
+    fetchDiagnoses();
+    fetchVisits();
+    fetchPatients();
+    fetchStaff();
+  }, [fetchDiagnoses, fetchVisits, fetchPatients, fetchStaff]);
+
   const handleOpenDialog = (diagnosis = null) => {
     setCurrentDiagnosis(diagnosis || {
       visit: '',
@@ -4050,21 +4053,7 @@ const DiagnosesPage = () => {
     }
   };
 
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
-  const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
-
-  const getVisitPatientName = (visitId) => {
-    const visit = visits.find(v => v.id === visitId);
-    if (!visit) return `Visit ID: ${visitId}`;
-    const patient = patients.find(p => p.id === visit.patient_id);
-    return patient ? `${patient.first_name} ${patient.last_name} (Visit #${visit.id})` : `Patient ID: ${visit.patient_id} (Visit #${visit.id})`;
-  };
-
-  const getStaffName = (staffId) => {
-    const staffMember = staff.find(s => s.id === staffId);
-    if (!staffMember || !staffMember.user) return `Staff ID: ${staffId}`;
-    return `${staffMember.user.first_name || ''} ${staffMember.user.last_name || staffMember.user.username}`;
-  };
+  const handleCloseSnackbar = useCallback(() => setSnackbar(prev => ({ ...prev, open: false })), []);
 
   return (
     <>
@@ -4082,7 +4071,7 @@ const DiagnosesPage = () => {
               InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
               value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={{ mr: 2 }}
             />
-            <Button startIcon={showFilters ? <ChevronRightIcon /> : <FilterIcon />} onClick={() => setShowFilters(!showFilters)}>
+            <Button startIcon={showFilters ? <ChevronRightIcon /> : <FilterListIcon />} onClick={() => setShowFilters(!showFilters)}>
               {showFilters ? 'Hide' : 'Filters'}
             </Button>
           </Box>
@@ -4234,12 +4223,21 @@ const TreatmentsPage = () => {
     { value: 'OTHER', label: 'Other' },
   ];
 
-  useEffect(() => {
-    fetchTreatments();
-    fetchVisits();
-    fetchPatients();
-    fetchStaff();
-  }, []);
+  const showSnackbar = useCallback((message, severity = 'success') => setSnackbar({ open: true, message, severity }), []);
+
+  const getVisitPatientName = useCallback((visitId) => {
+    const visit = visits.find(v => v.id === visitId);
+    if (!visit) return `Visit ID: ${visitId}`;
+    const patient = patients.find(p => p.id === visit.patient_id);
+    return patient ? `${patient.first_name} ${patient.last_name} (Visit #${visit.id})` : `Patient ID: ${visit.patient_id} (Visit #${visit.id})`;
+  }, [visits, patients]);
+
+  const getStaffName = useCallback((staffId) => {
+    if (!staffId) return 'N/A';
+    const staffMember = staff.find(s => s.id === staffId);
+    if (!staffMember || !staffMember.user) return `Staff ID: ${staffId}`;
+    return `${staffMember.user.first_name || ''} ${staffMember.user.last_name || staffMember.user.username}`;
+  }, [staff]);
 
   useEffect(() => {
     let result = treatments;
@@ -4260,43 +4258,50 @@ const TreatmentsPage = () => {
       result = result.filter(treat => treat.treatment_type === filters.treatment_type);
     }
     setFilteredTreatments(result);
-  }, [treatments, searchTerm, filters, visits, patients]);
+  }, [treatments, searchTerm, filters, getVisitPatientName]);
 
-  const fetchTreatments = async () => {
+  const fetchTreatments = useCallback(async () => {
     try {
       const res = await apiClient.get(API_TREATMENTS_BASE_URL);
       setTreatments(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch treatments', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const fetchVisits = async () => {
+  const fetchVisits = useCallback(async () => {
     try {
       const res = await apiClient.get(API_VISITS_BASE_URL);
       setVisits(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch visits', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       const res = await apiClient.get(API_PATIENTS_BASE_URL);
       setPatients(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch patients', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const fetchStaff = async () => {
+  const fetchStaff = useCallback(async () => {
     try {
       const res = await apiClient.get(API_STAFF_BASE_URL);
       setStaff(res.data.filter(s => ['RES', 'TEC', 'INT', 'ADM'].includes(s.role)));
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch staff', 'error');
     }
-  };
+  }, [showSnackbar]);
+
+  useEffect(() => {
+    fetchTreatments();
+    fetchVisits();
+    fetchPatients();
+    fetchStaff();
+  }, [fetchTreatments, fetchVisits, fetchPatients, fetchStaff]);
 
   const handleOpenDialog = (treatment = null) => {
     setCurrentTreatment(treatment || {
@@ -4363,22 +4368,7 @@ const TreatmentsPage = () => {
     }
   };
 
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
-  const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
-
-  const getVisitPatientName = (visitId) => {
-    const visit = visits.find(v => v.id === visitId);
-    if (!visit) return `Visit ID: ${visitId}`;
-    const patient = patients.find(p => p.id === visit.patient_id);
-    return patient ? `${patient.first_name} ${patient.last_name} (Visit #${visit.id})` : `Patient ID: ${visit.patient_id} (Visit #${visit.id})`;
-  };
-
-  const getStaffName = (staffId) => {
-    if (!staffId) return 'N/A';
-    const staffMember = staff.find(s => s.id === staffId);
-    if (!staffMember || !staffMember.user) return `Staff ID: ${staffId}`;
-    return `${staffMember.user.first_name || ''} ${staffMember.user.last_name || staffMember.user.username}`;
-  };
+  const handleCloseSnackbar = useCallback(() => setSnackbar(prev => ({ ...prev, open: false })), []);
 
   return (
     <>
@@ -4395,8 +4385,7 @@ const TreatmentsPage = () => {
                 variant="outlined" size="small" fullWidth
                 InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
                 value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={{ mr: 2 }}
-              />
-              <Button startIcon={showFilters ? <ChevronRightIcon /> : <FilterIcon />} onClick={() => setShowFilters(!showFilters)}>
+              /> <Button startIcon={showFilters ? <ChevronRightIcon /> : <FilterListIcon />} onClick={() => setShowFilters(!showFilters)}>
                 {showFilters ? 'Hide' : 'Filters'}
               </Button>
             </Box>
@@ -4542,12 +4531,21 @@ const VitalSignsPage = () => {
   const [patients, setPatients] = useState([]);
   const [staff, setStaff] = useState([]); // For recorded_by_id
 
-  useEffect(() => {
-    fetchVitalSigns();
-    fetchVisits();
-    fetchPatients();
-    fetchStaff();
-  }, []);
+  const showSnackbar = useCallback((message, severity = 'success') => setSnackbar({ open: true, message, severity }), []);
+
+  const getVisitPatientName = useCallback((visitId) => { 
+    const visit = visits.find(v => v.id === visitId);
+    if (!visit) return `Visit ID: ${visitId}`;
+    const patient = patients.find(p => p.id === visit.patient_id);
+    return patient ? `${patient.first_name} ${patient.last_name} (Visit #${visit.id})` : `Patient ID: ${visit.patient_id} (Visit #${visit.id})`;
+  }, [visits, patients]);
+
+  const getStaffName = useCallback((staffId) => { 
+    if (!staffId) return 'N/A';
+    const staffMember = staff.find(s => s.id === staffId);
+    if (!staffMember || !staffMember.user) return `Staff ID: ${staffId}`;
+    return `${staffMember.user.first_name || ''} ${staffMember.user.last_name || staffMember.user.username}`;
+  }, [staff]);
 
   useEffect(() => {
     let result = vitalSigns;
@@ -4567,41 +4565,50 @@ const VitalSignsPage = () => {
       result = result.filter(vs => new Date(vs.recorded_at).toLocaleDateString() === new Date(filters.date_recorded).toLocaleDateString());
     }
     setFilteredVitalSigns(result);
-  }, [vitalSigns, searchTerm, filters, visits, patients]);
+  }, [vitalSigns, searchTerm, filters, getVisitPatientName]);
 
-  const fetchVitalSigns = async () => {
+  const fetchVitalSigns = useCallback(async () => {
     try {
       const res = await apiClient.get(API_VITALS_BASE_URL);
       setVitalSigns(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch vital signs', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const fetchVisits = async () => { 
+  const fetchVisits = useCallback(async () => { 
     try {
       const res = await apiClient.get(API_VISITS_BASE_URL);
       setVisits(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch visits', 'error');
     }
-  };
-  const fetchPatients = async () => { 
+  }, [showSnackbar]);
+
+  const fetchPatients = useCallback(async () => { 
     try {
       const res = await apiClient.get(API_PATIENTS_BASE_URL);
       setPatients(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch patients', 'error');
     }
-  };
-  const fetchStaff = async () => { 
+  }, [showSnackbar]);
+
+  const fetchStaff = useCallback(async () => { 
     try {
       const res = await apiClient.get(API_STAFF_BASE_URL);
       setStaff(res.data.filter(s => ['RES', 'TEC', 'INT', 'ADM'].includes(s.role)));
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch staff', 'error');
     }
-  };
+  }, [showSnackbar]);
+
+  useEffect(() => {
+    fetchVitalSigns();
+    fetchVisits();
+    fetchPatients();
+    fetchStaff();
+  }, [fetchVitalSigns, fetchVisits, fetchPatients, fetchStaff]);
 
   const handleOpenDialog = (vitalSign = null) => {
     setCurrentVitalSign(vitalSign || {
@@ -4674,20 +4681,7 @@ const VitalSignsPage = () => {
     }
   };
 
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
-  const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
-  const getVisitPatientName = (visitId) => { 
-    const visit = visits.find(v => v.id === visitId);
-    if (!visit) return `Visit ID: ${visitId}`;
-    const patient = patients.find(p => p.id === visit.patient_id);
-    return patient ? `${patient.first_name} ${patient.last_name} (Visit #${visit.id})` : `Patient ID: ${visit.patient_id} (Visit #${visit.id})`;
-  };
-  const getStaffName = (staffId) => { 
-    if (!staffId) return 'N/A';
-    const staffMember = staff.find(s => s.id === staffId);
-    if (!staffMember || !staffMember.user) return `Staff ID: ${staffId}`;
-    return `${staffMember.user.first_name || ''} ${staffMember.user.last_name || staffMember.user.username}`;
-  };
+  const handleCloseSnackbar = useCallback(() => setSnackbar(prev => ({ ...prev, open: false })), []);
 
   return (
     <>
@@ -4703,7 +4697,7 @@ const VitalSignsPage = () => {
               InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
               value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={{ mr: 2 }}
             />
-            <Button startIcon={showFilters ? <ChevronRightIcon /> : <FilterIcon />} onClick={() => setShowFilters(!showFilters)}>
+            <Button startIcon={showFilters ? <ChevronRightIcon /> : <FilterListIcon />} onClick={() => setShowFilters(!showFilters)}>
               {showFilters ? 'Hide' : 'Filters'}
             </Button>
           </Box>
@@ -4839,12 +4833,21 @@ const PrescriptionsPage = () => {
   const [patients, setPatients] = useState([]);
   const [staff, setStaff] = useState([]); // For prescribed_by_id
 
-  useEffect(() => {
-    fetchPrescriptions();
-    fetchVisits();
-    fetchPatients();
-    fetchStaff();
-  }, []);
+  const showSnackbar = useCallback((message, severity = 'success') => setSnackbar({ open: true, message, severity }), []);
+
+  const getVisitPatientName = useCallback((visitId) => { 
+    const visit = visits.find(v => v.id === visitId);
+    if (!visit) return `Visit ID: ${visitId}`;
+    const patient = patients.find(p => p.id === visit.patient_id);
+    return patient ? `${patient.first_name} ${patient.last_name} (Visit #${visit.id})` : `Patient ID: ${visit.patient_id} (Visit #${visit.id})`;
+  }, [visits, patients]);
+
+  const getStaffName = useCallback((staffId) => { 
+    if (!staffId) return 'N/A';
+    const staffMember = staff.find(s => s.id === staffId);
+    if (!staffMember || !staffMember.user) return `Staff ID: ${staffId}`;
+    return `${staffMember.user.first_name || ''} ${staffMember.user.last_name || staffMember.user.username}`;
+  }, [staff]);
 
   useEffect(() => {
     let result = prescriptions;
@@ -4864,41 +4867,50 @@ const PrescriptionsPage = () => {
       result = result.filter(presc => presc.is_dispensed === (filters.is_dispensed === 'true'));
     }
     setFilteredPrescriptions(result);
-  }, [prescriptions, searchTerm, filters, visits, patients]);
+  }, [prescriptions, searchTerm, filters, getVisitPatientName]);
 
-  const fetchPrescriptions = async () => {
+  const fetchPrescriptions = useCallback(async () => {
     try {
       const res = await apiClient.get(API_PRESCRIPTIONS_BASE_URL);
       setPrescriptions(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch prescriptions', 'error');
     }
-  };
+  }, [showSnackbar]);
 
-  const fetchVisits = async () => { 
+  const fetchVisits = useCallback(async () => { 
     try {
       const res = await apiClient.get(API_VISITS_BASE_URL);
       setVisits(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch visits', 'error');
     }
-  };
-  const fetchPatients = async () => { 
+  }, [showSnackbar]);
+
+  const fetchPatients = useCallback(async () => { 
     try {
       const res = await apiClient.get(API_PATIENTS_BASE_URL);
       setPatients(res.data);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch patients', 'error');
     }
-  };
-  const fetchStaff = async () => { 
+  }, [showSnackbar]);
+
+  const fetchStaff = useCallback(async () => { 
     try {
       const res = await apiClient.get(API_STAFF_BASE_URL);
       setStaff(res.data.filter(s => ['RES', 'ADM'].includes(s.role)));
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to fetch staff (prescribers)', 'error');
     }
-  };
+  }, [showSnackbar]);
+
+  useEffect(() => {
+    fetchPrescriptions();
+    fetchVisits();
+    fetchPatients();
+    fetchStaff();
+  }, [fetchPrescriptions, fetchVisits, fetchPatients, fetchStaff]);
 
   const handleOpenDialog = (prescription = null) => {
     setCurrentPrescription(prescription || {
@@ -4960,20 +4972,7 @@ const PrescriptionsPage = () => {
     }
   };
 
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
-  const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
-  const getVisitPatientName = (visitId) => { 
-    const visit = visits.find(v => v.id === visitId);
-    if (!visit) return `Visit ID: ${visitId}`;
-    const patient = patients.find(p => p.id === visit.patient_id);
-    return patient ? `${patient.first_name} ${patient.last_name} (Visit #${visit.id})` : `Patient ID: ${visit.patient_id} (Visit #${visit.id})`;
-  };
-  const getStaffName = (staffId) => { 
-    if (!staffId) return 'N/A';
-    const staffMember = staff.find(s => s.id === staffId);
-    if (!staffMember || !staffMember.user) return `Staff ID: ${staffId}`;
-    return `${staffMember.user.first_name || ''} ${staffMember.user.last_name || staffMember.user.username}`;
-  };
+  const handleCloseSnackbar = useCallback(() => setSnackbar(prev => ({ ...prev, open: false })), []);
 
   return (
     <>
@@ -4989,7 +4988,7 @@ const PrescriptionsPage = () => {
               InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> }}
               value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={{ mr: 2 }}
             />
-            <Button startIcon={showFilters ? <ChevronRightIcon /> : <FilterIcon />} onClick={() => setShowFilters(!showFilters)}>
+            <Button startIcon={showFilters ? <ChevronRightIcon /> : <FilterListIcon />} onClick={() => setShowFilters(!showFilters)}>
               {showFilters ? 'Hide' : 'Filters'}
             </Button>
           </Box>
