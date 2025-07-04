@@ -156,6 +156,12 @@ services:
       context: ./frontend
     ports:
       - "3000:3000"
+    # --- MODIFICA 1: Aggiungi queste variabili d'ambiente per il reverse proxy ---
+    environment:
+      # Legge l'URL univoco fornito dal sistema di build (es. ospedale-12.localhost)
+      - VIRTUAL_HOST=${VIRTUAL_HOST} 
+      # Specifica a nginx-proxy su quale porta interna (del container) deve inoltrare il traffico
+      - VIRTUAL_PORT=3000 
     depends_on:
       - auth-service
       - inventory_service
@@ -164,10 +170,17 @@ services:
       - visit_service
     networks:
       - backend
+      # --- MODIFICA 3: Connetti il frontend anche alla rete del proxy ---
+      - proxy-net
 
 networks:
   backend:
     driver: bridge
+  # --- MODIFICA 2: Definisci la rete del proxy come esterna ---
+  proxy-net:
+    external:
+      # Legge il nome della rete esterna (demo_git_frontend-network) fornito dal sistema di build
+      name: ${NGINX_PROXY_NETWORK}
 
 volumes: 
   postgres_data:
